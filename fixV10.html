@@ -1026,6 +1026,79 @@
             .light-theme .nav-btn, .light-theme .new-tab-btn, .light-theme .home-btn, .light-theme .incognito-btn, .light-theme .bookmark-btn { color: #5a5a65 !important; }
             .light-theme .nav-btn:hover, .light-theme .new-tab-btn:hover, .light-theme .home-btn:hover, .light-theme .incognito-btn:hover, .light-theme .bookmark-btn:hover { background: #d0d0d5 !important; color: #ff1b54 !important; }
             .light-theme .bookmark-btn.bookmarked { color: #ff1b54 !important; }
+
+            /* Floating Window */
+            .floating-window {
+                position: absolute;
+                top: 100px;
+                left: 100px;
+                width: 400px;
+                height: 300px;
+                background: #1d1d21;
+                border: 1px solid #3a3a42;
+                border-radius: 8px;
+                box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+                display: flex;
+                flex-direction: column;
+                z-index: 2000;
+                overflow: hidden;
+                resize: both;
+            }
+            .floating-header {
+                background: #16161a;
+                padding: 10px;
+                cursor: move;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                border-bottom: 1px solid #2a2a2e;
+                user-select: none;
+            }
+            .floating-title {
+                font-size: 14px;
+                font-weight: 600;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                margin-right: 10px;
+            }
+            .floating-controls {
+                display: flex;
+                gap: 5px;
+                flex-shrink: 0;
+            }
+            .float-btn {
+                width: 20px;
+                height: 20px;
+                border-radius: 50%;
+                border: none;
+                cursor: pointer;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                color: #fff;
+                font-size: 12px;
+            }
+            .float-btn.close { background: #ff4757; }
+            .float-btn.min { background: #ffa502; }
+            .float-btn.max { background: #2ed573; }
+            .float-btn.tab { background: #3742fa; }
+            .floating-content {
+                flex: 1;
+                background: #fff;
+                overflow: auto;
+                position: relative;
+            }
+            .floating-content iframe {
+                width: 100%;
+                height: 100%;
+                border: none;
+                background: #fff;
+            }
+            .light-theme .floating-window { background: #ffffff; border-color: #d0d0d5; }
+            .light-theme .floating-header { background: #f0f0f4; border-color: #d0d0d5; color: #1d1d21; }
+            .floating-window.minimized { height: 40px !important; resize: none; overflow: hidden; }
+            .floating-window.maximized { top: 0 !important; left: 0 !important; width: 100% !important; height: 100% !important; resize: none; border-radius: 0; }
         </style>
     </head>
     <body>
@@ -1275,6 +1348,20 @@
                         </div>
                         <label class="mod-switch"><input type="checkbox"><span class="mod-slider"></span></label>
                     </div>
+                    
+                    <div style="margin-top: 20px; border-top: 1px solid #3a3a42; padding-top: 15px;">
+                        <h4 style="margin-bottom: 10px;">Add Custom HTML Mod</h4>
+                        <div class="form-group">
+                            <label class="form-label">Mod Name</label>
+                            <input type="text" class="form-input" id="custom-mod-name" placeholder="My Cool Mod" />
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">HTML Code</label>
+                            <textarea class="form-input" id="custom-mod-code" rows="4" placeholder="<h1>Hello World</h1>" style="resize: vertical; font-family: monospace;"></textarea>
+                        </div>
+                        <button class="form-btn" style="margin-top: 10px; width: 100%;" onclick="saveCustomMod()">Save Mod</button>
+                        <div id="custom-mods-list" style="margin-top: 15px; display: flex; flex-direction: column; gap: 10px;"></div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -1344,10 +1431,17 @@
             // Theme State
             let isDarkTheme = localStorage.getItem("vortex-dark-theme") !== "false";
 
+            // Custom Mods State
+            let customMods = JSON.parse(localStorage.getItem("vortex-custom-mods") || "[]");
+
             // Initialize app
             function init() {
                 // Load theme
                 applyTheme();
+                
+                // Initialize Custom Mods
+                renderCustomMods();
+                renderSidebarMods();
                 
                 // Load saved data
                 const savedBookmarks = localStorage.getItem("vortex-bookmarks");
@@ -2094,3 +2188,210 @@
         </script>
     </body>
 </html>
+<script>
+// Custom Mods JS additions
+function saveCustomMod() {
+    const name = document.getElementById('custom-mod-name').value;
+    const code = document.getElementById('custom-mod-code').value;
+    
+    if (!name || !code) {
+        alert("Please enter both a name and HTML code.");
+        return;
+    }
+    
+    const mod = { id: Date.now().toString(), name, code };
+    customMods.push(mod);
+    localStorage.setItem("vortex-custom-mods", JSON.stringify(customMods));
+    
+    document.getElementById('custom-mod-name').value = '';
+    document.getElementById('custom-mod-code').value = '';
+    
+    renderCustomMods();
+    renderSidebarMods();
+}
+
+function renderCustomMods() {
+    const list = document.getElementById('custom-mods-list');
+    if (!list) return;
+    
+    list.innerHTML = '';
+    customMods.forEach((mod, index) => {
+        const item = document.createElement('div');
+        item.style.cssText = "display: flex; justify-content: space-between; align-items: center; background: rgba(38, 38, 43, 0.5); padding: 10px; border-radius: 4px;";
+        
+        item.innerHTML = `
+            <span>${mod.name}</span>
+            <button class="form-btn" style="padding: 5px 10px; background: #ef4444; width: auto;" onclick="deleteCustomMod(${index})">Delete</button>
+        `;
+        list.appendChild(item);
+    });
+}
+
+function deleteCustomMod(index) {
+    customMods.splice(index, 1);
+    localStorage.setItem("vortex-custom-mods", JSON.stringify(customMods));
+    renderCustomMods();
+    renderSidebarMods();
+}
+
+function renderSidebarMods() {
+    // Add custom mods to the sidebar logic
+    const sidebar = document.getElementById('sidebar');
+    if (!sidebar) return;
+    
+    // First remove old custom mod buttons
+    const oldBtns = sidebar.querySelectorAll('.custom-mod-btn');
+    oldBtns.forEach(btn => btn.remove());
+    
+    // Insert new ones before the proxy settings button
+    const proxyBtn = sidebar.querySelector('[title="Proxy Settings"]');
+    
+    customMods.forEach(mod => {
+        const btn = document.createElement('div');
+        btn.className = 'sidebar-icon custom-mod-btn';
+        btn.title = mod.name;
+        btn.onclick = () => launchModWindow(mod);
+        btn.innerHTML = `
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M2 12l5.25 5 2.625-3-2.625-3L2 12zm20 0l-5.25-5-2.625 3 2.625 3L22 12zm-8-7l-4 14h2l4-14h-2z" />
+            </svg>
+        `;
+        sidebar.insertBefore(btn, proxyBtn);
+    });
+}
+
+let floatingWindows = [];
+
+function launchModWindow(mod) {
+    // Create floating window
+    const win = document.createElement('div');
+    win.className = 'floating-window';
+    const winId = 'win-' + Date.now();
+    win.id = winId;
+    
+    // Header
+    const header = document.createElement('div');
+    header.className = 'floating-header';
+    
+    const title = document.createElement('div');
+    title.className = 'floating-title';
+    title.textContent = mod.name;
+    
+    const controls = document.createElement('div');
+    controls.className = 'floating-controls';
+    
+    const newTabBtn = document.createElement('button');
+    newTabBtn.className = 'float-btn tab';
+    newTabBtn.title = "Open in New Tab";
+    newTabBtn.innerHTML = '⧉';
+    newTabBtn.onclick = (e) => {
+        e.stopPropagation();
+        createNewTab(false);
+        setTimeout(() => {
+            const iframe = document.querySelector(`#tab-content-${activeTabId} .content-iframe`);
+            if (iframe) {
+                iframe.srcdoc = mod.code;
+                updateTabTitle(activeTabId, mod.name);
+                win.remove();
+            }
+        }, 100);
+    };
+    
+    const minBtn = document.createElement('button');
+    minBtn.className = 'float-btn min';
+    minBtn.innerHTML = '-';
+    minBtn.onclick = (e) => {
+        e.stopPropagation();
+        win.classList.toggle('minimized');
+    };
+    
+    const maxBtn = document.createElement('button');
+    maxBtn.className = 'float-btn max';
+    maxBtn.innerHTML = '□';
+    maxBtn.onclick = (e) => {
+        e.stopPropagation();
+        win.classList.toggle('maximized');
+    };
+    
+    const closeBtn = document.createElement('button');
+    closeBtn.className = 'float-btn close';
+    closeBtn.innerHTML = '×';
+    closeBtn.onclick = (e) => {
+        e.stopPropagation();
+        win.remove();
+    };
+    
+    controls.appendChild(newTabBtn);
+    controls.appendChild(minBtn);
+    controls.appendChild(maxBtn);
+    controls.appendChild(closeBtn);
+    
+    header.appendChild(title);
+    header.appendChild(controls);
+    
+    // Drag logic
+    let isDragging = false;
+    let startX, startY, initialX, initialY;
+    
+    header.onmousedown = (e) => {
+        if(e.target.tagName === 'BUTTON') return;
+        isDragging = true;
+        startX = e.clientX;
+        startY = e.clientY;
+        initialX = win.offsetLeft;
+        initialY = win.offsetTop;
+        
+        // Bring to front
+        document.querySelectorAll('.floating-window').forEach(w => w.style.zIndex = 2000);
+        win.style.zIndex = 2001;
+    };
+    
+    document.addEventListener('mousemove', (e) => {
+        if (!isDragging || win.classList.contains('maximized')) return;
+        const dx = e.clientX - startX;
+        const dy = e.clientY - startY;
+        win.style.left = (initialX + dx) + 'px';
+        win.style.top = (initialY + dy) + 'px';
+    });
+    
+    document.addEventListener('mouseup', () => {
+        isDragging = false;
+    });
+    
+    // Content
+    const content = document.createElement('div');
+    content.className = 'floating-content';
+    const iframe = document.createElement('iframe');
+    iframe.srcdoc = mod.code;
+    
+    // Allow iframe interaction but prevent drag interference
+    iframe.onload = () => {
+        iframe.contentWindow.document.body.addEventListener('mousemove', (e) => {
+             if (isDragging) {
+                 // Trigger parent mousemove if dragging over iframe
+                 const evt = new MouseEvent('mousemove', {
+                     clientX: e.clientX + win.offsetLeft,
+                     clientY: e.clientY + win.offsetTop + 40 // rough header height
+                 });
+                 document.dispatchEvent(evt);
+             }
+        });
+        iframe.contentWindow.document.body.addEventListener('mouseup', () => {
+            isDragging = false;
+        });
+    };
+    
+    content.appendChild(iframe);
+    
+    win.appendChild(header);
+    win.appendChild(content);
+    
+    document.querySelector('.browser').appendChild(win);
+    
+    // Bring to front on click
+    win.onmousedown = () => {
+        document.querySelectorAll('.floating-window').forEach(w => w.style.zIndex = 2000);
+        win.style.zIndex = 2001;
+    };
+}
+</script>
