@@ -1,5 +1,7 @@
 # Vortex Web (v10)
 
+![Vortex Web Screenshot](https://raw.githubusercontent.com/Ren23447/Vortex-Web/refs/heads/main/Screenshot.png)
+
 A cyberpunk-inspired, in-browser “mini browser” UI built with pure **HTML, CSS, and JavaScript**.
 
 ## Features
