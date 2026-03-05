@@ -1,0 +1,2096 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Vortex Web (v10)</title>
+        <link
+            rel="icon"
+            type="image/png"
+            href="https://png.pngtree.com/png-vector/20221122/ourmid/pngtree-vortex-logo-icon-wave-and-spiral-vector-movement-twirl-ring-vector-png-image_34736928.png"
+        />
+        <style>
+            * {
+                margin: 0;
+                padding: 0;
+                box-sizing: border-box;
+            }
+
+            body {
+                font-family:
+                    -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto",
+                    "Oxygen", "Ubuntu", "Cantarell", sans-serif;
+                background: #1d1d21;
+                color: #fff;
+                overflow: hidden;
+                height: 100vh;
+            }
+
+            /* Main browser container */
+            .browser {
+                display: flex;
+                height: 100vh;
+                background: #1d1d21;
+            }
+
+            /* Sidebar */
+            .sidebar {
+                width: 60px;
+                background: #16161a;
+                border-right: 1px solid #2a2a2e;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                padding: 10px 0;
+                transition: width 0.3s ease;
+                z-index: 1000;
+            }
+
+            .sidebar.expanded {
+                width: 300px;
+            }
+
+            .sidebar-icon {
+                width: 40px;
+                height: 40px;
+                margin: 8px 0;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                border-radius: 8px;
+                cursor: pointer;
+                transition: all 0.2s ease;
+                color: #8f8f9d;
+                position: relative;
+            }
+
+            .sidebar-icon:hover {
+                background: #ff1b54;
+                color: #fff;
+            }
+
+            .sidebar-icon.active {
+                background: #ff1b54;
+                color: #fff;
+            }
+
+            /* Sidebar Panels */
+            .sidebar-panel {
+                position: absolute;
+                left: 60px;
+                top: 0;
+                width: 340px;
+                height: 100vh;
+                background: #1d1d21;
+                border-right: 1px solid #2a2a2e;
+                transform: translateX(-100%);
+                transition: transform 0.3s ease;
+                overflow-y: auto;
+                z-index: 999;
+            }
+
+            .sidebar-panel.active {
+                transform: translateX(0);
+            }
+
+            .panel-header {
+                padding: 20px;
+                background: #16161a;
+                border-bottom: 1px solid #2a2a2e;
+                font-size: 18px;
+                font-weight: 600;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+            }
+
+            .panel-close {
+                cursor: pointer;
+                font-size: 24px;
+                color: #8f8f9d;
+                transition: color 0.2s;
+            }
+
+            .panel-close:hover {
+                color: #ff1b54;
+            }
+
+            .panel-content {
+                padding: 20px;
+            }
+
+            /* Main content area */
+            .main-content {
+                flex: 1;
+                display: flex;
+                flex-direction: column;
+                overflow: hidden;
+            }
+
+            /* Tab bar */
+            .tab-bar {
+                background: #16161a;
+                display: flex;
+                align-items: center;
+                padding: 0 10px;
+                border-bottom: 1px solid #2a2a2e;
+                height: 40px;
+                overflow-x: auto;
+                overflow-y: hidden;
+            }
+
+            .tab-bar::-webkit-scrollbar {
+                height: 0;
+            }
+
+            .tab {
+                min-width: 180px;
+                max-width: 240px;
+                height: 32px;
+                background: #1d1d21;
+                border-radius: 8px 8px 0 0;
+                margin-right: 2px;
+                display: flex;
+                align-items: center;
+                padding: 0 12px;
+                cursor: pointer;
+                position: relative;
+                transition: all 0.2s ease;
+            }
+
+            .tab:hover {
+                background: #26262b;
+            }
+
+            .tab.active {
+                background: #2a2a2e;
+                border-bottom: 2px solid #ff1b54;
+            }
+            
+            .tab.incognito-tab {
+                border-bottom-color: #9333ea; /* Purple for incognito */
+            }
+            .tab.incognito-tab .tab-icon {
+                color: #9333ea;
+            }
+
+            .tab-icon {
+                width: 16px;
+                height: 16px;
+                margin-right: 8px;
+                flex-shrink: 0;
+            }
+
+            .tab-title {
+                flex: 1;
+                font-size: 12px;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                color: #b1b1b8;
+            }
+
+            .tab.active .tab-title {
+                color: #fff;
+            }
+
+            .tab-close {
+                width: 18px;
+                height: 18px;
+                border-radius: 4px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                margin-left: 8px;
+                opacity: 0;
+                transition: all 0.2s;
+                color: #8f8f9d;
+                flex-shrink: 0;
+            }
+
+            .tab:hover .tab-close {
+                opacity: 1;
+            }
+
+            .tab-close:hover {
+                background: #ff1b54;
+                color: #fff;
+            }
+            
+            /* Dragging styles */
+            .tab.dragging {
+                opacity: 0.5;
+                background-color: #3a3a42;
+                border: 1px dashed #555;
+            }
+
+            .new-tab-btn, .home-btn, .incognito-btn {
+                width: 32px;
+                height: 32px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                cursor: pointer;
+                border-radius: 6px;
+                margin-left: 5px;
+                color: #8f8f9d;
+                transition: all 0.2s;
+                flex-shrink: 0;
+            }
+
+            .new-tab-btn:hover, .home-btn:hover {
+                background: #2a2a2e;
+                color: #ff1b54;
+            }
+            
+            .incognito-btn:hover {
+                background: #2a2a2e;
+                color: #9333ea; /* Purple */
+            }
+
+            /* Incognito Button Container */
+            .incognito-container {
+                margin-left: auto;
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                padding-right: 10px;
+            }
+
+            /* Address bar */
+            .address-bar {
+                background: #16161a;
+                padding: 10px 15px;
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                border-bottom: 1px solid #2a2a2e;
+            }
+
+            .nav-buttons {
+                display: flex;
+                gap: 5px;
+            }
+
+            .nav-btn {
+                width: 32px;
+                height: 32px;
+                border-radius: 6px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                cursor: pointer;
+                transition: all 0.2s;
+                color: #8f8f9d;
+                background: transparent;
+                border: none;
+            }
+
+            .nav-btn:hover {
+                background: #2a2a2e;
+                color: #ff1b54;
+            }
+
+            .nav-btn:disabled {
+                opacity: 0.3;
+                cursor: not-allowed;
+            }
+
+            .url-container {
+                flex: 1;
+                background: #1d1d21;
+                border: 1px solid #2a2a2e;
+                border-radius: 8px;
+                display: flex;
+                align-items: center;
+                padding: 0 12px;
+                height: 36px;
+                transition: all 0.2s;
+            }
+
+            .url-container:focus-within {
+                border-color: #ff1b54;
+                box-shadow: 0 0 0 2px rgba(255, 27, 84, 0.2);
+            }
+            
+            .incognito-mode .url-container:focus-within {
+                border-color: #9333ea;
+                box-shadow: 0 0 0 2px rgba(147, 51, 234, 0.2);
+            }
+
+            .url-icon {
+                width: 16px;
+                height: 16px;
+                margin-right: 8px;
+                color: #8f8f9d;
+            }
+
+            .url-input {
+                flex: 1;
+                background: transparent;
+                border: none;
+                outline: none;
+                color: #fff;
+                font-size: 13px;
+            }
+
+            .url-input::placeholder {
+                color: #5a5a65;
+            }
+
+            .bookmark-btn {
+                width: 32px;
+                height: 32px;
+                border-radius: 6px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                cursor: pointer;
+                transition: all 0.2s;
+                color: #8f8f9d;
+                background: transparent;
+                border: none;
+            }
+
+            .bookmark-btn:hover {
+                background: #2a2a2e;
+                color: #ff1b54;
+            }
+
+            .bookmark-btn.bookmarked {
+                color: #ff1b54;
+            }
+
+            /* Content area */
+            .content-area {
+                flex: 1;
+                background: #1d1d21;
+                position: relative;
+                overflow: hidden;
+            }
+
+            .tab-content {
+                width: 100%;
+                height: 100%;
+                display: none;
+            }
+
+            .tab-content.active {
+                display: block;
+            }
+
+            .content-iframe {
+                width: 100%;
+                height: 100%;
+                border: none;
+            }
+
+            /* New tab page */
+            .new-tab-page {
+                width: 100%;
+                height: 100%;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                padding: 40px;
+                overflow-y: auto;
+                background: url("https://img.freepik.com/premium-vector/realistic-abstracts-geometric-background_1318093-16790.jpg") no-repeat center center;
+                background-size: cover;
+                position: relative;
+            }
+
+            .new-tab-page::before {
+                content: "";
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(29, 29, 33, 0.7);
+                z-index: 1;
+            }
+            
+            .incognito-mode .new-tab-page::before {
+                 background: rgba(20, 10, 20, 0.9); /* Darker for incognito */
+            }
+
+            .new-tab-page > * {
+                position: relative;
+                z-index: 2;
+            }
+
+            .vortex-logo {
+                font-size: 64px;
+                font-weight: 900;
+                color: #fff;
+                margin-bottom: 40px;
+                text-transform: uppercase;
+                position: relative;
+                animation: glitch-skew 1s infinite linear alternate-reverse;
+            }
+            .vortex-logo::before, .vortex-logo::after {
+                content: attr(data-text);
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+            }
+            .vortex-logo::before {
+                left: 2px;
+                text-shadow: -2px 0 #ff00c1;
+                clip: rect(44px, 450px, 56px, 0);
+                animation: glitch-anim-1 5s infinite linear alternate-reverse;
+            }
+            .vortex-logo::after {
+                left: -2px;
+                text-shadow: -2px 0 #00fff9;
+                clip: rect(44px, 450px, 56px, 0);
+                animation: glitch-anim-2 5s infinite linear alternate-reverse;
+            }
+            
+            /* Glitch Animations (kept from original) */
+            @keyframes glitch-anim-1 {
+                0% { clip: rect(30px, 9999px, 10px, 0); transform: skew(0.85deg); }
+                5% { clip: rect(70px, 9999px, 90px, 0); transform: skew(0.85deg); }
+                10% { clip: rect(15px, 9999px, 80px, 0); transform: skew(0.25deg); }
+                15% { clip: rect(90px, 9999px, 5px, 0); transform: skew(0.05deg); }
+                20% { clip: rect(10px, 9999px, 100px, 0); transform: skew(0.35deg); }
+                25% { clip: rect(35px, 9999px, 60px, 0); transform: skew(0.65deg); }
+                30% { clip: rect(85px, 9999px, 25px, 0); transform: skew(0.75deg); }
+                35% { clip: rect(5px, 9999px, 85px, 0); transform: skew(0.15deg); }
+                40% { clip: rect(45px, 9999px, 45px, 0); transform: skew(0.55deg); }
+                45% { clip: rect(95px, 9999px, 15px, 0); transform: skew(0.95deg); }
+                50% { clip: rect(20px, 9999px, 70px, 0); transform: skew(0.45deg); }
+                55% { clip: rect(60px, 9999px, 30px, 0); transform: skew(0.25deg); }
+                60% { clip: rect(75px, 9999px, 55px, 0); transform: skew(0.85deg); }
+                65% { clip: rect(15px, 9999px, 15px, 0); transform: skew(0.35deg); }
+                70% { clip: rect(85px, 9999px, 95px, 0); transform: skew(0.65deg); }
+                75% { clip: rect(35px, 9999px, 35px, 0); transform: skew(0.05deg); }
+                80% { clip: rect(50px, 9999px, 50px, 0); transform: skew(0.75deg); }
+                85% { clip: rect(10px, 9999px, 10px, 0); transform: skew(0.15deg); }
+                90% { clip: rect(65px, 9999px, 65px, 0); transform: skew(0.45deg); }
+                95% { clip: rect(25px, 9999px, 25px, 0); transform: skew(0.25deg); }
+                100% { clip: rect(90px, 9999px, 90px, 0); transform: skew(0.95deg); }
+            }
+            @keyframes glitch-anim-2 {
+                0% { clip: rect(65px, 9999px, 100px, 0); transform: skew(0.15deg); }
+                5% { clip: rect(5px, 9999px, 10px, 0); transform: skew(0.65deg); }
+                10% { clip: rect(95px, 9999px, 85px, 0); transform: skew(0.35deg); }
+                15% { clip: rect(25px, 9999px, 25px, 0); transform: skew(0.85deg); }
+                20% { clip: rect(70px, 9999px, 70px, 0); transform: skew(0.45deg); }
+                25% { clip: rect(15px, 9999px, 30px, 0); transform: skew(0.25deg); }
+                30% { clip: rect(55px, 9999px, 55px, 0); transform: skew(0.75deg); }
+                35% { clip: rect(10px, 9999px, 15px, 0); transform: skew(0.55deg); }
+                40% { clip: rect(80px, 9999px, 90px, 0); transform: skew(0.95deg); }
+                45% { clip: rect(40px, 9999px, 40px, 0); transform: skew(0.05deg); }
+                50% { clip: rect(60px, 9999px, 60px, 0); transform: skew(0.45deg); }
+                55% { clip: rect(100px, 9999px, 35px, 0); transform: skew(0.25deg); }
+                60% { clip: rect(20px, 9999px, 20px, 0); transform: skew(0.85deg); }
+                65% { clip: rect(90px, 9999px, 80px, 0); transform: skew(0.35deg); }
+                70% { clip: rect(30px, 9999px, 50px, 0); transform: skew(0.75deg); }
+                75% { clip: rect(50px, 9999px, 100px, 0); transform: skew(0.15deg); }
+                80% { clip: rect(75px, 9999px, 5px, 0); transform: skew(0.95deg); }
+                85% { clip: rect(15px, 9999px, 15px, 0); transform: skew(0.55deg); }
+                90% { clip: rect(45px, 9999px, 45px, 0); transform: skew(0.25deg); }
+                95% { clip: rect(85px, 9999px, 85px, 0); transform: skew(0.65deg); }
+                100% { clip: rect(10px, 9999px, 10px, 0); transform: skew(0.45deg); }
+            }
+            @keyframes glitch-skew {
+                0% { transform: skew(1deg); }
+                10% { transform: skew(-1deg); }
+                20% { transform: skew(2deg); }
+                30% { transform: skew(-0.5deg); }
+                40% { transform: skew(1.5deg); }
+                50% { transform: skew(-2.5deg); }
+                60% { transform: skew(0.5deg); }
+                70% { transform: skew(-1.5deg); }
+                80% { transform: skew(2.5deg); }
+                90% { transform: skew(-1deg); }
+                100% { transform: skew(1deg); }
+            }
+
+            .search-container {
+                width: 100%;
+                max-width: 600px;
+                margin-bottom: 50px;
+                position: relative;
+            }
+
+            .search-box {
+                width: 100%;
+                background: rgba(38, 38, 43, 0.9);
+                border: 2px solid #3a3a42;
+                clip-path: polygon(15px 0, 100% 0, 100% calc(100% - 15px), calc(100% - 15px) 100%, 0 100%, 0 15px);
+                padding: 16px 70px 16px 20px;
+                font-size: 16px;
+                color: #fff;
+                outline: none;
+                transition: all 0.3s ease;
+                backdrop-filter: blur(5px);
+            }
+
+            .search-box:focus {
+                border-color: #ff1b54;
+                box-shadow: 0 0 0 3px rgba(255, 27, 84, 0.2);
+                background: rgba(38, 38, 43, 1);
+            }
+
+            .search-btn {
+                position: absolute;
+                right: 0;
+                top: 0;
+                bottom: 0;
+                width: 60px;
+                background: #ff1b54;
+                border: none;
+                clip-path: polygon(0 0, 100% 0, 100% calc(100% - 15px), calc(100% - 15px) 100%, 0 100%);
+                cursor: pointer;
+                transition: all 0.3s ease;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                color: #fff;
+            }
+
+            .search-btn:hover {
+                background: #ff006e;
+            }
+
+            .quick-links {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+                gap: 15px;
+                width: 100%;
+                max-width: 800px;
+                margin-bottom: 30px;
+            }
+
+            .quick-link, .add-quick-link {
+                background: rgba(38, 38, 43, 0.8);
+                border: 1px solid #3a3a42;
+                clip-path: polygon(15px 0, 100% 0, 100% calc(100% - 15px), calc(100% - 15px) 100%, 0 100%, 0 15px);
+                padding: 20px;
+                text-align: center;
+                cursor: pointer;
+                transition: all 0.3s ease;
+                text-decoration: none;
+                color: inherit;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                gap: 10px;
+                backdrop-filter: blur(5px);
+                position: relative;
+            }
+
+            .quick-link:hover, .add-quick-link:hover {
+                background: rgba(58, 58, 66, 0.9);
+                transform: translateY(-5px);
+                border-color: #ff1b54;
+            }
+
+            .quick-link-icon, .add-quick-link-icon {
+                font-size: 24px;
+                margin-bottom: 5px;
+            }
+
+            .quick-link-title, .add-quick-link-text {
+                font-size: 13px;
+                font-weight: 500;
+                color: #fff;
+            }
+
+            .quick-link-delete {
+                position: absolute;
+                top: 5px;
+                right: 5px;
+                width: 20px;
+                height: 20px;
+                border-radius: 50%;
+                background: #2a2a2e;
+                color: #ff1b54;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 10px;
+                opacity: 0;
+                transition: opacity 0.2s;
+            }
+            .quick-link:hover .quick-link-delete {
+                opacity: 1;
+            }
+            .quick-link-delete:hover {
+                background: #fff;
+            }
+
+            .cpu-fill, .ram-fill {
+                height: 100%;
+                background: linear-gradient(90deg, #ff1b54, #ff006e);
+                border-radius: 4px;
+                transition: width 0.3s ease;
+            }
+
+            .stat-grid {
+                display: grid;
+                grid-template-columns: repeat(2, 1fr);
+                gap: 15px;
+                margin-top: 15px;
+            }
+
+            .stat-item {
+                background: #1d1d21;
+                padding: 12px;
+                border-radius: 8px;
+            }
+
+            .stat-label {
+                font-size: 11px;
+                color: #8f8f9d;
+                margin-bottom: 5px;
+                text-transform: uppercase;
+            }
+
+            .stat-value {
+                font-size: 20px;
+                font-weight: 700;
+                color: #ff1b54;
+            }
+
+            /* Tooltip */
+            .tooltip {
+                position: absolute;
+                background: #26262b;
+                color: #fff;
+                padding: 5px 10px;
+                border-radius: 4px;
+                font-size: 12px;
+                pointer-events: none;
+                opacity: 0;
+                transition: opacity 0.2s;
+                z-index: 1001;
+                border: 1px solid #3a3a42;
+            }
+
+            /* Modals */
+            .modal-overlay {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0, 0, 0, 0.7);
+                backdrop-filter: blur(5px);
+                z-index: 2000;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                opacity: 0;
+                pointer-events: none;
+                transition: opacity 0.3s ease;
+            }
+
+            .modal-overlay.active {
+                opacity: 1;
+                pointer-events: auto;
+            }
+
+            .modal {
+                background: #1d1d21;
+                width: 90%;
+                max-width: 500px;
+                border-radius: 12px;
+                border: 1px solid #2a2a2e;
+                overflow: hidden;
+                box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+                transform: scale(0.95);
+                transition: transform 0.3s ease;
+            }
+
+            .modal-overlay.active .modal {
+                transform: scale(1);
+            }
+
+            .modal-header {
+                padding: 15px 20px;
+                background: #16161a;
+                border-bottom: 1px solid #2a2a2e;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                font-weight: 600;
+                font-size: 18px;
+            }
+
+            .modal-close {
+                cursor: pointer;
+                font-size: 24px;
+                color: #8f8f9d;
+            }
+
+            .modal-close:hover {
+                color: #ff1b54;
+            }
+
+            .modal-content {
+                padding: 20px;
+            }
+
+            .mod-item {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding: 15px 0;
+                border-bottom: 1px solid #2a2a2e;
+            }
+
+            .mod-item:last-child {
+                border-bottom: none;
+            }
+
+            .mod-info {
+                display: flex;
+                align-items: center;
+                gap: 15px;
+            }
+
+            .mod-icon {
+                font-size: 24px;
+            }
+
+            .mod-details h4 {
+                font-size: 15px;
+                margin-bottom: 4px;
+            }
+
+            .mod-details p {
+                font-size: 12px;
+                color: #8f8f9d;
+            }
+
+            /* Switch */
+            .mod-switch {
+                position: relative;
+                display: inline-block;
+                width: 44px;
+                height: 24px;
+            }
+
+            .mod-switch input {
+                opacity: 0;
+                width: 0;
+                height: 0;
+            }
+
+            .mod-slider {
+                position: absolute;
+                cursor: pointer;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background-color: #3a3a42;
+                transition: .4s;
+                border-radius: 24px;
+            }
+
+            .mod-slider:before {
+                position: absolute;
+                content: "";
+                height: 18px;
+                width: 18px;
+                left: 3px;
+                bottom: 3px;
+                background-color: white;
+                transition: .4s;
+                border-radius: 50%;
+            }
+
+            input:checked + .mod-slider {
+                background-color: #ff1b54;
+            }
+
+            input:checked + .mod-slider:before {
+                transform: translateX(20px);
+            }
+
+            /* Form Elements */
+            .form-group {
+                margin-bottom: 15px;
+            }
+
+            .form-label {
+                display: block;
+                font-size: 13px;
+                color: #8f8f9d;
+                margin-bottom: 8px;
+            }
+
+            .form-input {
+                width: 100%;
+                background: #26262b;
+                border: 1px solid #3a3a42;
+                padding: 10px;
+                border-radius: 6px;
+                color: #fff;
+                font-size: 14px;
+                outline: none;
+                transition: border-color 0.2s;
+            }
+
+            .form-input:focus {
+                border-color: #ff1b54;
+            }
+
+            .form-btn {
+                background: #ff1b54;
+                color: #fff;
+                border: none;
+                padding: 10px 20px;
+                border-radius: 6px;
+                cursor: pointer;
+                font-weight: 600;
+                transition: background 0.2s;
+            }
+
+            .form-btn:hover {
+                background: #ff006e;
+            }
+            
+            .proxy-list {
+                display: flex;
+                flex-direction: column;
+                gap: 10px;
+            }
+            
+            .proxy-option {
+                padding: 15px;
+                background: #26262b;
+                border: 1px solid #3a3a42;
+                border-radius: 8px;
+                cursor: pointer;
+                transition: all 0.2s;
+                display: flex;
+                align-items: center;
+            }
+            
+            .proxy-option:hover {
+                border-color: #8f8f9d;
+            }
+            
+            .proxy-option.selected {
+                border-color: #ff1b54;
+                background: rgba(255, 27, 84, 0.1);
+            }
+            
+            .proxy-option span {
+                font-weight: 500;
+            }
+            
+            .gx-news-item {
+                cursor: pointer;
+                margin-bottom: 15px;
+                padding: 10px;
+                background: #26262b;
+                border-radius: 8px;
+                transition: transform 0.2s;
+            }
+            .gx-news-item:hover {
+                transform: translateY(-2px);
+                background: #2a2a2e;
+            }
+            .gx-news-title {
+                font-weight: 600;
+                margin-top: 5px;
+                font-size: 14px;
+                line-height: 1.4;
+            }
+            .gx-news-date {
+                font-size: 11px;
+                color: #8f8f9d;
+                margin-top: 5px;
+            }
+            
+            .settings-section {
+                margin-bottom: 25px;
+                border-bottom: 1px solid #2a2a2e;
+                padding-bottom: 15px;
+            }
+            .settings-section:last-child {
+                border-bottom: none;
+            }
+            .settings-section h3 {
+                font-size: 14px;
+                text-transform: uppercase;
+                color: #8f8f9d;
+                margin-bottom: 15px;
+                letter-spacing: 1px;
+            }
+            .setting-item {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-bottom: 15px;
+            }
+
+            /* Scrollbar */
+            ::-webkit-scrollbar {
+                width: 8px;
+                height: 8px;
+            }
+
+            ::-webkit-scrollbar-track {
+                background: #1d1d21;
+            }
+
+            ::-webkit-scrollbar-thumb {
+                background: #3a3a42;
+                border-radius: 4px;
+            }
+
+            ::-webkit-scrollbar-thumb:hover {
+                background: #555;
+            }
+            
+            /* Loading Indicator */
+            .loading {
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 2px;
+                background: transparent;
+                z-index: 1000;
+                overflow: hidden;
+            }
+            
+            .loading.active {
+                background: rgba(255, 27, 84, 0.2);
+            }
+            
+            .loading.active::after {
+                content: "";
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 40%;
+                height: 100%;
+                background: #ff1b54;
+                animation: loading 1s infinite linear;
+            }
+            
+            @keyframes loading {
+                0% { left: -40%; }
+                100% { left: 100%; }
+            }
+            
+            .incognito-mode {
+                /* Overrides for incognito */
+            }
+            
+            /* Light Theme Overrides */
+            .light-theme {
+                background: #f0f0f4 !important;
+                color: #1d1d21 !important;
+            }
+            .light-theme .browser { background: #f0f0f4 !important; }
+            .light-theme .sidebar { background: #ffffff !important; border-right: 1px solid #d0d0d5 !important; }
+            .light-theme .sidebar-icon { color: #5a5a65 !important; }
+            .light-theme .sidebar-icon:hover { background: #ff1b54 !important; color: #fff !important; }
+            .light-theme .sidebar-icon.active { background: #ff1b54 !important; color: #fff !important; }
+            .light-theme .sidebar-panel { background: #f0f0f4 !important; border-right: 1px solid #d0d0d5 !important; }
+            .light-theme .panel-header { background: #ffffff !important; border-bottom: 1px solid #d0d0d5 !important; color: #1d1d21 !important; }
+            .light-theme .tab-bar { background: #ffffff !important; border-bottom: 1px solid #d0d0d5 !important; }
+            .light-theme .tab { background: #e0e0e5 !important; }
+            .light-theme .tab:hover { background: #d0d0d5 !important; }
+            .light-theme .tab.active { background: #f0f0f4 !important; border-bottom: 2px solid #ff1b54 !important; }
+            .light-theme .tab-title { color: #5a5a65 !important; }
+            .light-theme .tab.active .tab-title { color: #1d1d21 !important; }
+            .light-theme .address-bar { background: #ffffff !important; border-bottom: 1px solid #d0d0d5 !important; }
+            .light-theme .url-container { background: #f0f0f4 !important; border: 1px solid #d0d0d5 !important; }
+            .light-theme .url-input { color: #1d1d21 !important; }
+            .light-theme .url-input::placeholder { color: #a0a0a5 !important; }
+            .light-theme .content-area { background: #ffffff !important; }
+            .light-theme .search-box { background: rgba(255, 255, 255, 0.9) !important; border: 2px solid #d0d0d5 !important; color: #1d1d21 !important; }
+            .light-theme .quick-link, .light-theme .add-quick-link { background: rgba(255, 255, 255, 0.8) !important; border: 1px solid #d0d0d5 !important; color: #1d1d21 !important; }
+            .light-theme .quick-link-title, .light-theme .add-quick-link-text { color: #1d1d21 !important; }
+            .light-theme .stat-item { background: #ffffff !important; }
+            .light-theme .modal-content { background: #f0f0f4 !important; }
+            .light-theme .modal-header { background: #ffffff !important; border-bottom: 1px solid #d0d0d5 !important; color: #1d1d21 !important; }
+            .light-theme .proxy-option { background: rgba(255, 255, 255, 0.8) !important; border: 1px solid #d0d0d5 !important; color: #1d1d21 !important; }
+            .light-theme .form-input { background: #ffffff !important; border: 1px solid #d0d0d5 !important; color: #1d1d21 !important; }
+            .light-theme .new-tab-page::before { background: rgba(240, 240, 244, 0.7) !important; }
+            .light-theme .vortex-logo { color: #1d1d21 !important; }
+            .light-theme .settings-section { color: #1d1d21 !important; }
+            .light-theme .nav-btn, .light-theme .new-tab-btn, .light-theme .home-btn, .light-theme .incognito-btn, .light-theme .bookmark-btn { color: #5a5a65 !important; }
+            .light-theme .nav-btn:hover, .light-theme .new-tab-btn:hover, .light-theme .home-btn:hover, .light-theme .incognito-btn:hover, .light-theme .bookmark-btn:hover { background: #d0d0d5 !important; color: #ff1b54 !important; }
+            .light-theme .bookmark-btn.bookmarked { color: #ff1b54 !important; }
+        </style>
+    </head>
+    <body>
+
+        <!-- Main Browser UI -->
+        <div class="browser">
+            <!-- Sidebar -->
+            <div class="sidebar" id="sidebar">
+                <div class="sidebar-icon" onclick="toggleSidebar()">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+                </div>
+                <div class="sidebar-icon" data-panel="bookmarks" title="Bookmarks" onclick="togglePanel('bookmarks')">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path></svg>
+                </div>
+                <div class="sidebar-icon" data-panel="widgets" title="Widgets" onclick="togglePanel('widgets')">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="3" y="3" width="7" height="7"></rect>
+                        <rect x="14" y="3" width="7" height="7"></rect>
+                        <rect x="14" y="14" width="7" height="7"></rect>
+                        <rect x="3" y="14" width="7" height="7"></rect>
+                    </svg>
+                </div>
+                <div class="sidebar-icon" data-panel="gx-corner" title="Gaming News" onclick="togglePanel('gx-corner')">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                        <polyline points="14 2 14 8 20 8"></polyline>
+                        <line x1="16" y1="13" x2="8" y2="13"></line>
+                        <line x1="16" y1="17" x2="8" y2="17"></line>
+                        <polyline points="10 9 9 9 8 9"></polyline>
+                    </svg>
+                </div>
+                <!-- Mods Button -->
+                <div class="sidebar-icon" data-panel="mods" title="Mods" onclick="openMods()">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+                        <polyline points="2 17 12 22 22 17"></polyline>
+                        <polyline points="2 12 12 17 22 12"></polyline>
+                    </svg>
+                </div>
+                
+                <!-- Proxy Settings Button -->
+                <div class="sidebar-icon" title="Proxy Settings" onclick="openProxyModal()">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                    </svg>
+                </div>
+                
+                <div style="margin-top: auto;">
+                    <div class="sidebar-icon" onclick="togglePanel('settings')" data-panel="settings" title="Settings">
+                         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="3"></circle>
+                            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sidebar Panels (Bookmarks, Widgets, Gaming News, Settings) -->
+            <div class="sidebar-panel" id="panel-bookmarks">
+                <div class="panel-header">Bookmarks <span class="panel-close" onclick="closePanel()">×</span></div>
+                <div class="panel-content">
+                    <div class="add-bookmark-form">
+                        <div class="form-group"><label class="form-label">Title</label><input type="text" class="form-input" id="bookmark-title" placeholder="Enter bookmark title" /></div>
+                        <div class="form-group"><label class="form-label">URL</label><input type="text" class="form-input" id="bookmark-url" placeholder="https://example.com" /></div>
+                        <button class="form-btn" onclick="addBookmark()">Add Bookmark</button>
+                    </div>
+                    <div id="bookmarks-list"></div>
+                </div>
+            </div>
+
+            <div class="sidebar-panel" id="panel-widgets">
+                <div class="panel-header">Widgets <span class="panel-close" onclick="closePanel()">×</span></div>
+                <div class="panel-content">
+                    <div class="widget">
+                        <div class="widget-header">⚡ Performance Monitor</div>
+                        <div class="widget-content">
+                            <div style="margin-bottom: 15px">
+                                <div style="display: flex; justify-content: space-between; margin-bottom: 5px"><span>CPU Usage</span><span id="cpu-percent">0%</span></div>
+                                <div class="cpu-bar"><div class="cpu-fill" id="cpu-fill" style="width: 0%"></div></div>
+                            </div>
+                            <div>
+                                <div style="display: flex; justify-content: space-between; margin-bottom: 5px"><span>RAM Usage</span><span id="ram-percent">0%</span></div>
+                                <div class="ram-bar"><div class="ram-fill" id="ram-fill" style="width: 0%"></div></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="widget">
+                        <div class="widget-header">🕐 Quick Stats</div>
+                        <div class="widget-content">
+                            <div class="stat-grid">
+                                <div class="stat-item"><div class="stat-label">Tabs Open</div><div class="stat-value" id="tabs-count">1</div></div>
+                                <div class="stat-item"><div class="stat-label">Bookmarks</div><div class="stat-value" id="bookmarks-count">0</div></div>
+                                <div class="stat-item"><div class="stat-label">Time</div><div class="stat-value" id="current-time" style="font-size: 16px">00:00</div></div>
+                                <div class="stat-item"><div class="stat-label">Speed</div><div class="stat-value">MAX</div></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="widget"><div class="widget-header">🎮 Gaming Mode</div><div class="widget-content">Network Limiter: <span style="color: #ff1b54">Unlimited</span><br />GX Cleaner: <span style="color: #4ade80">Active</span><br />Battery Saver: <span style="color: #8f8f9d">Off</span></div></div>
+                </div>
+            </div>
+
+            <div class="sidebar-panel" id="panel-gx-corner">
+                <div class="panel-header">Gaming News <span class="panel-close" onclick="closePanel()">×</span></div>
+                <div class="panel-content">
+                    <div class="widget"><div class="widget-header">🎮 Gaming News</div><div class="widget-content" id="gx-news-list">
+                        <div style="padding: 20px; text-align: center; color: #888;">Loading news...</div>
+                    </div></div>
+                </div>
+            </div>
+
+            <!-- Enhanced Settings Panel -->
+            <div class="sidebar-panel" id="panel-settings">
+                <div class="panel-header">Settings <span class="panel-close" onclick="closePanel()">×</span></div>
+                <div class="panel-content">
+                    <div class="settings-section">
+                        <h3>Appearance</h3>
+                        <div class="setting-item">
+                            <span>Dark Theme</span>
+                            <label class="mod-switch"><input type="checkbox" checked onchange="toggleTheme()"><span class="mod-slider"></span></label>
+                        </div>
+                         <div class="setting-item">
+                            <span>Show Bookmarks Bar</span>
+                            <label class="mod-switch"><input type="checkbox" checked id="setting-bookmarks-bar" onchange="toggleBookmarksBar()"><span class="mod-slider"></span></label>
+                        </div>
+                         <div class="setting-item">
+                            <span>Enable Animations</span>
+                            <label class="mod-switch"><input type="checkbox" checked><span class="mod-slider"></span></label>
+                        </div>
+                    </div>
+                    <div class="settings-section">
+                        <h3>Privacy</h3>
+                         <div class="setting-item">
+                            <span>Block Ads</span>
+                            <label class="mod-switch"><input type="checkbox" checked><span class="mod-slider"></span></label>
+                        </div>
+                        <div class="setting-item">
+                            <span>Do Not Track</span>
+                            <label class="mod-switch"><input type="checkbox"><span class="mod-slider"></span></label>
+                        </div>
+                        <div class="setting-item">
+                            <span>Https Only</span>
+                            <label class="mod-switch"><input type="checkbox" checked><span class="mod-slider"></span></label>
+                        </div>
+                    </div>
+                     <div class="settings-section">
+                        <h3>Search Engine</h3>
+                        <select class="form-input" onchange="changeSearchEngine(this.value)">
+                            <option value="google">Google</option>
+                            <option value="bing">Bing</option>
+                            <option value="duckduckgo">DuckDuckGo</option>
+                        </select>
+                    </div>
+                     <div class="settings-section">
+                        <button class="form-btn" style="background: #ef4444;" onclick="clearData()">Clear Browsing Data</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main content area -->
+            <div class="main-content">
+                <div class="tab-bar" id="tab-bar">
+                    <!-- Home Button -->
+                    <div class="home-btn" onclick="goHome()" title="Home Page">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                           <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                           <polyline points="9 22 9 12 15 12 15 22"></polyline>
+                        </svg>
+                    </div>
+
+                    <!-- Tabs will be inserted here -->
+                    <div class="new-tab-btn" onclick="createNewTab(false)">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="12" y1="5" x2="12" y2="19"></line>
+                            <line x1="5" y1="12" x2="19" y2="12"></line>
+                        </svg>
+                    </div>
+
+                    <!-- Incognito Button (Updated) -->
+                    <div class="incognito-container">
+                         <div class="incognito-btn" onclick="openIncognitoTab()" title="New Incognito Tab">
+                            <svg width="200" height="200" viewBox="-8.5 -10 25 24" fill="none" stroke="currentColor" stroke-width="0.7">
+                                <path d="M 0 0 L 1 -4 L 4 -3 L 7 -4 L 8 0 L 0 0 M 0 1 L 8 1 L 10 2 L -2 2 L 0 1 L 8 1 M 0 3 L 1 8 L 7 8 L 8 3 L 0 3"></path>
+                                
+                                
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+                
+
+                <div class="address-bar">
+                    <div class="nav-buttons">
+                        <button class="nav-btn" id="back-btn" onclick="goBack()" disabled>
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                        </button>
+                        <button class="nav-btn" id="forward-btn" onclick="goForward()" disabled>
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                        </button>
+                        <button class="nav-btn" onclick="refreshPage()">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 4v6h-6"></path><path d="M1 20v-6h6"></path><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
+                        </button>
+                    </div>
+                    <div class="url-container">
+                        <div class="url-icon">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                        </div>
+                        <input type="text" class="url-input" id="url-input" placeholder="Search or enter URL..." onkeydown="if(event.key === 'Enter') handleUrlSubmit()" />
+                    </div>
+                    <button class="bookmark-btn" id="bookmark-current-btn" onclick="toggleBookmarkCurrentPage()">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2-2z"></path></svg>
+                    </button>
+                </div>
+
+                <div class="loading" id="loading"></div>
+                <div class="content-area" id="content-area">
+                    <!-- Tab contents will be inserted here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Modals -->
+        <div class="modal-overlay" id="mods-modal">
+            <div class="modal">
+                <div class="modal-header">
+                    <span>Vortex Mods</span>
+                    <span class="modal-close" onclick="closeMods()">×</span>
+                </div>
+                <div class="modal-content">
+                    <div class="mod-item">
+                        <div class="mod-info">
+                            <div class="mod-icon">🎵</div>
+                            <div class="mod-details"><h4>Background Music</h4><p>Ambient cyberpunk sounds</p></div>
+                        </div>
+                        <label class="mod-switch"><input type="checkbox"><span class="mod-slider"></span></label>
+                    </div>
+                    <div class="mod-item">
+                        <div class="mod-info">
+                            <div class="mod-icon">⌨️</div>
+                            <div class="mod-details"><h4>Keyboard Sounds</h4><p>Mechanical click effects</p></div>
+                        </div>
+                        <label class="mod-switch"><input type="checkbox" checked><span class="mod-slider"></span></label>
+                    </div>
+                     <div class="mod-item">
+                        <div class="mod-info">
+                            <div class="mod-icon">👾</div>
+                            <div class="mod-details"><h4>Retro Mode</h4><p>Pixelate the UI</p></div>
+                        </div>
+                        <label class="mod-switch"><input type="checkbox"><span class="mod-slider"></span></label>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="modal-overlay" id="add-link-modal">
+             <div class="modal">
+                <div class="modal-header">
+                    <span>Add Quick Link</span>
+                    <span class="modal-close" onclick="closeAddLinkModal()">×</span>
+                </div>
+                <div class="modal-content">
+                    <div class="add-bookmark-form" style="margin-bottom: 0;">
+                         <div class="form-group"><label class="form-label">Title</label><input type="text" class="form-input" id="quick-link-title" placeholder="Site Name" /></div>
+                        <div class="form-group"><label class="form-label">URL</label><input type="text" class="form-input" id="quick-link-url" placeholder="https://example.com" /></div>
+                        <div class="form-group"><label class="form-label">Icon (Emoji)</label><input type="text" class="form-input" id="quick-link-icon" placeholder="🔗" value="🔗" /></div>
+                        <button class="form-btn" onclick="saveQuickLink()">Save Link</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Proxy Settings Modal (New) -->
+        <div class="modal-overlay" id="proxy-modal">
+             <div class="modal">
+                <div class="modal-header">
+                    <span>Proxy Settings</span>
+                    <span class="modal-close" onclick="closeProxyModal()">×</span>
+                </div>
+                <div class="modal-content">
+                    <div class="proxy-list">
+                         <div class="proxy-option" onclick="selectProxy('direct')" id="proxy-direct">
+                            <span>Direct (No Proxy)</span>
+                         </div>
+                         <div class="proxy-option" onclick="selectProxy('ultraviolet')" id="proxy-ultraviolet">
+                            <span>Ultraviolet (Recommended)</span>
+                         </div>
+                    </div>
+                    
+                    <div style="margin-top: 20px; border-top: 1px solid #3a3a42; padding-top: 15px;">
+                        <h4 style="margin-bottom: 10px;">Custom Backend Server</h4>
+                        <div class="form-group">
+                            <label class="form-label">Proxy URL Prefix</label>
+                            <input type="text" class="form-input" id="custom-proxy-input" placeholder="https://exampleproxy.com/" />
+                        </div>
+                        <button class="form-btn" style="margin-top: 10px; width: 100%;" onclick="saveCustomProxy()">Save Custom Proxy</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+        <script>
+            // App state
+            let tabs = [];
+            let activeTabId = null;
+            let bookmarks = [];
+            let activePanelId = null;
+            let quickLinks = [];
+            
+            // Proxy State
+            let currentProxy = localStorage.getItem("vortex-proxy-type") || "direct";
+            let customProxyUrl = localStorage.getItem("vortex-custom-proxy") || "";
+            
+            // Search Engine State
+            let currentSearchEngine = localStorage.getItem("vortex-search-engine") || "google";
+
+            // Theme State
+            let isDarkTheme = localStorage.getItem("vortex-dark-theme") !== "false";
+
+            // Initialize app
+            function init() {
+                // Load theme
+                applyTheme();
+                
+                // Load saved data
+                const savedBookmarks = localStorage.getItem("vortex-bookmarks");
+                if (savedBookmarks) {
+                    bookmarks = JSON.parse(savedBookmarks);
+                }
+
+                const savedQuickLinks = localStorage.getItem("vortex-quick-links");
+                if (savedQuickLinks) {
+                    quickLinks = JSON.parse(savedQuickLinks);
+                } else {
+                    // Defaults
+                    quickLinks = [
+                        { title: "Google", url: "https://www.google.com", icon: "🔍" },
+                        { title: "YouTube", url: "https://www.youtube.com", icon: "▶️" },
+                        { title: "GitHub", url: "https://github.com", icon: "💻" },
+                        { title: "Discord", url: "https://discord.com", icon: "💬" },
+                        { title: "Bing", url: "https://www.bing.com/search?q=ready+to+game", icon: "🌐"},
+                        { title: "Copilot", url: "https://www.bing.com/copilotsearch?q=Ready+to+game%3f&FORM=CSSCOP", icon: "🤖"}
+                    ];
+                }
+                
+                // Set initial search engine selection in settings
+                const searchSelect = document.querySelector('select[onchange="changeSearchEngine(this.value)"]');
+                if (searchSelect) searchSelect.value = currentSearchEngine;
+
+                // Initial tab is Home Page
+                createNewTab(true);
+                loadBookmarks();
+                startClock();
+                simulatePerformance();
+                updateStats();
+                updateProxyUI();
+                
+                // Load News
+                loadGamingNews();
+
+                // Setup Drag and Drop for Tabs
+                setupTabReordering();
+            }
+            
+            // Search Engine Change
+            function changeSearchEngine(engine) {
+                currentSearchEngine = engine;
+                localStorage.setItem("vortex-search-engine", engine);
+            }
+
+            // Tab Management
+            function createNewTab(isFirst = false, isIncognito = false) {
+                const tabId = Date.now().toString();
+                
+                const title = isFirst ? "Home Page" : (isIncognito ? "Incognito Tab" : "New Tab");
+                
+                const tab = {
+                    id: tabId,
+                    title: title,
+                    url: "",
+                    history: [],
+                    historyIndex: -1,
+                    isNewTab: true,
+                    isIncognito: isIncognito
+                };
+
+                tabs.push(tab);
+
+                // Create tab UI
+                const tabElement = document.createElement("div");
+                tabElement.className = `tab ${isIncognito ? 'incognito-tab' : ''}`;
+                tabElement.dataset.tabId = tabId;
+                tabElement.draggable = true; // Make Draggable
+                tabElement.onclick = () => switchTab(tabId);
+                
+                // Incognito Icon vs Regular Icon
+                const iconSvg = isIncognito 
+                    ? `<svg width="30" height="30" viewBox="-2 -4 25 24" fill="none" stroke="currentColor" stroke-width="0.7"><path d="M 0 0 L 1 -4 L 4 -3 L 7 -4 L 8 0 L 0 0 M 0 1 L 8 1 L 10 2 L -2 2 L 0 1 L 8 1 M 0 3 L 1 8 L 7 8 L 8 3 L 0 3"></path></svg>`
+                    : `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"></polygon></svg>`;
+
+                tabElement.innerHTML = `
+                    <div class="tab-icon">
+                         ${iconSvg}
+                    </div>
+                    <div class="tab-title">${title}</div>
+                    <div class="tab-close" onclick="closeTab('${tabId}', event)">×</div>
+                `;
+
+                // Insert before new tab button (which is after home button)
+                const newTabBtn = document.querySelector(".new-tab-btn");
+                document.getElementById("tab-bar").insertBefore(tabElement, newTabBtn);
+
+                // Create content UI
+                const contentElement = document.createElement("div");
+                contentElement.className = "tab-content";
+                contentElement.dataset.tabId = tabId;
+                
+                // Content for new tab page
+                contentElement.innerHTML = `
+                    <div class="new-tab-page">
+                        <div class="vortex-logo" data-text="VORTEX">VORTEX</div>
+                        ${isIncognito ? '<div style="margin-bottom: 20px; color: #a855f7;">Incognito Mode</div>' : ''}
+                        <div class="search-container">
+                            <input type="text" class="search-box" placeholder="${isIncognito ? 'Browse freely...' : 'Search the web...'}" onkeydown="handleNewTabSearch(event, '${tabId}')" />
+                            <button class="search-btn" onclick="performNewTabSearch('${tabId}')">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <circle cx="11" cy="11" r="8"></circle>
+                                    <path d="m21 21-4.35-4.35"></path>
+                                </svg>
+                            </button>
+                        </div>
+                        <div class="quick-links" id="quick-links-${tabId}">
+                            <!-- Quick links rendered here -->
+                        </div>
+                    </div>
+                `;
+
+                document.getElementById("content-area").appendChild(contentElement);
+
+                if (!isIncognito) {
+                    renderQuickLinks(tabId);
+                }
+                switchTab(tabId);
+                updateStats();
+            }
+
+            function openIncognitoTab() {
+                createNewTab(false, true);
+            }
+
+            function closeTab(tabId, event) {
+                if (event) event.stopPropagation();
+
+                // If closing last tab, don't remove, just reset to home
+                if (tabs.length === 1) {
+                    goHome();
+                    return;
+                }
+
+                const tabIndex = tabs.findIndex((t) => t.id === tabId);
+                if (tabIndex === -1) return;
+
+                tabs.splice(tabIndex, 1);
+
+                // Remove UI
+                document.querySelector(`.tab[data-tab-id="${tabId}"]`)?.remove();
+                document.querySelector(`.tab-content[data-tab-id="${tabId}"]`)?.remove();
+
+                // Switch if active
+                if (activeTabId === tabId) {
+                    const newActiveTab = tabs[Math.max(0, tabIndex - 1)];
+                    switchTab(newActiveTab.id);
+                }
+                updateStats();
+            }
+
+            function switchTab(tabId) {
+                activeTabId = tabId;
+
+                // Update tabs
+                document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+                document.querySelector(`.tab[data-tab-id="${tabId}"]`)?.classList.add("active");
+
+                // Update content
+                document.querySelectorAll(".tab-content").forEach(c => c.classList.remove("active"));
+                document.querySelector(`.tab-content[data-tab-id="${tabId}"]`)?.classList.add("active");
+
+                // Update URL bar
+                const tab = tabs.find(t => t.id === tabId);
+                if (tab) {
+                    document.getElementById("url-input").value = tab.isNewTab ? "" : tab.url;
+                    updateNavigationButtons(tab);
+                    
+                    // Update Bookmark button status
+                    const isBookmarked = bookmarks.some(b => b.url === tab.url);
+                    const btn = document.getElementById("bookmark-current-btn");
+                    if(isBookmarked) btn.classList.add("bookmarked"); else btn.classList.remove("bookmarked");
+                    
+                    // Toggle Incognito Theme
+                    if (tab.isIncognito) {
+                        document.body.classList.add('incognito-mode');
+                        document.querySelector('.sidebar').style.background = '#2b1120';
+                        document.querySelector('.tab-bar').style.background = '#2b1120';
+                    } else {
+                        document.body.classList.remove('incognito-mode');
+                         document.querySelector('.sidebar').style.background = '#16161a';
+                        document.querySelector('.tab-bar').style.background = '#16161a';
+                    }
+                }
+            }
+
+            // Quick Links
+            function renderQuickLinks(tabId) {
+                const container = document.getElementById(`quick-links-${tabId}`);
+                if (!container) return;
+
+                let html = quickLinks.map((link, index) => `
+                    <div class="quick-link" onclick="navigateInTab('${tabId}', '${link.url}')">
+                        <div class="quick-link-delete" onclick="event.stopPropagation(); removeQuickLink(${index})">×</div>
+                        <div class="quick-link-icon">${link.icon}</div>
+                        <div class="quick-link-title">${link.title}</div>
+                    </div>
+                `).join("");
+
+                html += `
+                    <div class="add-quick-link" onclick="openAddLinkModal()">
+                        <div class="add-quick-link-icon">+</div>
+                        <div class="add-quick-link-text">Add Link</div>
+                    </div>
+                `;
+                
+                container.innerHTML = html;
+            }
+
+            function removeQuickLink(index) {
+                if (confirm("Remove this shortcut?")) {
+                    quickLinks.splice(index, 1);
+                    localStorage.setItem("vortex-quick-links", JSON.stringify(quickLinks));
+                    
+                    // Refresh all open new tabs
+                    tabs.forEach(t => {
+                        if (!t.isIncognito) renderQuickLinks(t.id);
+                    });
+                }
+            }
+
+            function openAddLinkModal() {
+                document.getElementById("add-link-modal").classList.add("active");
+                document.getElementById("quick-link-title").value = "";
+                document.getElementById("quick-link-url").value = "";
+                document.getElementById("quick-link-icon").value = "🔗";
+            }
+            
+            function closeAddLinkModal() {
+                document.getElementById("add-link-modal").classList.remove("active");
+            }
+            
+            function saveQuickLink() {
+                const title = document.getElementById("quick-link-title").value || "New Site";
+                let url = document.getElementById("quick-link-url").value;
+                const icon = document.getElementById("quick-link-icon").value || "🔗";
+                
+                if (!url) {
+                    alert("Please enter a URL");
+                    return;
+                }
+                
+                if (!url.startsWith("http") && !url.startsWith("data:")) {
+                    url = "https://" + url;
+                }
+                
+                quickLinks.push({ title, url, icon });
+                localStorage.setItem("vortex-quick-links", JSON.stringify(quickLinks));
+                
+                closeAddLinkModal();
+                
+                // Refresh all open new tabs
+                tabs.forEach(t => {
+                    if (!t.isIncognito) renderQuickLinks(t.id);
+                });
+            }
+
+            function navigateInTab(tabId, url) {
+                const tab = tabs.find(t => t.id === tabId);
+                if (!tab) return;
+                
+                // Proxy Handling
+                let finalUrl = url;
+                if (!tab.isIncognito && !url.includes("google.com/search") && !url.includes("bing.com/search") && !url.includes("duckduckgo.com")) {
+                    if (currentProxy === 'ultraviolet') {
+                         finalUrl = "https://uv.example.com/service/" + btoa(url); // Mock UV encoding
+                         // Since we don't have a real UV backend, we'll fall back to a direct load or custom proxy
+                         if (customProxyUrl) {
+                              finalUrl = customProxyUrl + url;
+                         } else {
+                              // If no custom proxy and no real UV, just alert user or load direct
+                              console.log("Using Mock Proxy for: " + url);
+                              // For demonstration, let's just append a query param to show it's proxied
+                              // finalUrl = url + "?proxied=true"; 
+                         }
+                    } else if (customProxyUrl) {
+                        finalUrl = customProxyUrl + url;
+                    }
+                }
+
+                tab.url = url; // Keep original URL in state for display
+                tab.isNewTab = false;
+                
+                // History
+                if (tab.historyIndex < tab.history.length - 1) {
+                    tab.history = tab.history.slice(0, tab.historyIndex + 1);
+                }
+                tab.history.push(url);
+                tab.historyIndex++;
+
+                const contentElement = document.querySelector(`.tab-content[data-tab-id="${tabId}"]`);
+                if (contentElement) {
+                    document.getElementById("loading").classList.add("active");
+                    
+                    let domain = url;
+                    try {
+                        domain = new URL(url).hostname;
+                    } catch(e) { domain = url; }
+
+                    updateTabTitle(tabId, domain);
+
+                    // Iframe
+                    // Note: In a real "browse freely" scenario, this needs a backend proxy to avoid X-Frame-Options
+                    // Here we use the finalUrl which might be the proxied URL
+                    contentElement.innerHTML = `<iframe class="content-iframe" src="${finalUrl}" onload="hideLoading()" onerror="hideLoading()"></iframe>`;
+                }
+
+                if (activeTabId === tabId) {
+                    document.getElementById("url-input").value = url;
+                    updateNavigationButtons(tab);
+                }
+            }
+
+            function goHome() {
+                const tab = tabs.find(t => t.id === activeTabId);
+                if (!tab) return;
+                
+                tab.isNewTab = true;
+                tab.url = "";
+                tab.title = tab.isIncognito ? "Incognito Tab" : "Home Page";
+                
+                updateTabTitle(activeTabId, tab.title);
+                document.getElementById("url-input").value = "";
+                
+                const contentElement = document.querySelector(`.tab-content[data-tab-id="${activeTabId}"]`);
+                contentElement.innerHTML = `
+                    <div class="new-tab-page">
+                        <div class="vortex-logo" data-text="VORTEX">VORTEX</div>
+                         ${tab.isIncognito ? '<div style="margin-bottom: 20px; color: #a855f7;">Incognito Mode</div>' : ''}
+                        <div class="search-container">
+                            <input type="text" class="search-box" placeholder="${tab.isIncognito ? 'Browse freely...' : 'Search the web...'}" onkeydown="handleNewTabSearch(event, '${activeTabId}')" />
+                            <button class="search-btn" onclick="performNewTabSearch('${activeTabId}')">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.35-4.35"></path></svg>
+                            </button>
+                        </div>
+                        <div class="quick-links" id="quick-links-${activeTabId}"></div>
+                    </div>
+                `;
+                if (!tab.isIncognito) renderQuickLinks(activeTabId);
+                updateNavigationButtons(tab);
+            }
+
+            function handleUrlSubmit() {
+                const input = document.getElementById("url-input");
+                let url = input.value.trim();
+                if (!url) return;
+
+                if (!url.includes(".") || url.includes(" ")) {
+                    if (currentSearchEngine === 'bing') {
+                         url = `https://www.bing.com/search?q=${encodeURIComponent(url)}`;
+                    } else if (currentSearchEngine === 'duckduckgo') {
+                         url = `https://duckduckgo.com/?q=${encodeURIComponent(url)}`;
+                    } else {
+                         url = `https://www.google.com/search?q=${encodeURIComponent(url)}&igu=1`;
+                    }
+                }
+                navigateInTab(activeTabId, url);
+            }
+            
+            function performNewTabSearch(tabId) {
+                const input = document.querySelector(`.tab-content[data-tab-id="${tabId}"] .search-box`);
+                if (input && input.value.trim()) {
+                    let url = "";
+                    if (currentSearchEngine === 'bing') {
+                         url = `https://www.bing.com/search?q=${encodeURIComponent(input.value.trim())}`;
+                    } else if (currentSearchEngine === 'duckduckgo') {
+                         url = `https://duckduckgo.com/?q=${encodeURIComponent(input.value.trim())}`;
+                    } else {
+                         url = `https://www.google.com/search?q=${encodeURIComponent(input.value.trim())}&igu=1`;
+                    }
+                    navigateInTab(tabId, url);
+                }
+            }
+            
+            function handleNewTabSearch(event, tabId) {
+                if (event.key === "Enter") performNewTabSearch(tabId);
+            }
+
+            function goBack() {
+                const tab = tabs.find(t => t.id === activeTabId);
+                if (!tab || tab.historyIndex <= 0) return;
+                tab.historyIndex--;
+                navigateInTab(activeTabId, tab.history[tab.historyIndex]); 
+            }
+
+            function goForward() {
+                const tab = tabs.find(t => t.id === activeTabId);
+                if (!tab || tab.historyIndex >= tab.history.length - 1) return;
+                tab.historyIndex++;
+                navigateInTab(activeTabId, tab.history[tab.historyIndex]);
+            }
+
+            function refreshPage() {
+                const tab = tabs.find(t => t.id === activeTabId);
+                if (!tab || tab.isNewTab) return;
+                const contentElement = document.querySelector(`.tab-content[data-tab-id="${activeTabId}"]`);
+                const iframe = contentElement.querySelector("iframe");
+                if (iframe) iframe.src = iframe.src;
+            }
+
+            function updateTabTitle(tabId, title) {
+                const tab = tabs.find(t => t.id === tabId);
+                if (tab) {
+                    tab.title = title;
+                    const titleEl = document.querySelector(`.tab[data-tab-id="${tabId}"] .tab-title`);
+                    if (titleEl) titleEl.textContent = title;
+                }
+            }
+
+            function updateNavigationButtons(tab) {
+                document.getElementById("back-btn").disabled = !tab || tab.historyIndex <= 0;
+                document.getElementById("forward-btn").disabled = !tab || tab.historyIndex >= tab.history.length - 1;
+            }
+
+            function hideLoading() {
+                setTimeout(() => document.getElementById("loading").classList.remove("active"), 300);
+            }
+
+            // Mods
+            function openMods() {
+                document.getElementById("mods-modal").classList.add("active");
+            }
+            function closeMods() {
+                document.getElementById("mods-modal").classList.remove("active");
+            }
+            
+            // Proxy Modal
+            function openProxyModal() {
+                 document.getElementById("proxy-modal").classList.add("active");
+                 document.getElementById("custom-proxy-input").value = customProxyUrl;
+                 updateProxyUI();
+            }
+            function closeProxyModal() {
+                 document.getElementById("proxy-modal").classList.remove("active");
+            }
+            
+            function selectProxy(type) {
+                currentProxy = type;
+                localStorage.setItem("vortex-proxy-type", type);
+                updateProxyUI();
+            }
+            
+            function saveCustomProxy() {
+                const val = document.getElementById("custom-proxy-input").value.trim();
+                customProxyUrl = val;
+                localStorage.setItem("vortex-custom-proxy", val);
+                alert("Custom proxy saved!");
+            }
+            
+            function updateProxyUI() {
+                document.querySelectorAll(".proxy-option").forEach(el => el.classList.remove("selected"));
+                if (currentProxy === 'direct') document.getElementById("proxy-direct")?.classList.add("selected");
+                if (currentProxy === 'ultraviolet') document.getElementById("proxy-ultraviolet")?.classList.add("selected");
+            }
+
+            // Panels
+            function togglePanel(panelId) {
+                const panel = document.getElementById(`panel-${panelId}`);
+                const icon = document.querySelector(`.sidebar-icon[data-panel="${panelId}"]`);
+                
+                if (activePanelId === panelId) {
+                    closePanel();
+                } else {
+                    if (activePanelId) closePanel();
+                    panel.classList.add("active");
+                    icon.classList.add("active");
+                    activePanelId = panelId;
+                    
+                    if (panelId === "bookmarks") loadBookmarks();
+                }
+            }
+
+            function closePanel() {
+                if (activePanelId) {
+                    document.getElementById(`panel-${activePanelId}`).classList.remove("active");
+                    document.querySelector(`.sidebar-icon[data-panel="${activePanelId}"]`).classList.remove("active");
+                    activePanelId = null;
+                }
+            }
+
+            // Bookmarks
+            function loadBookmarks() {
+                const list = document.getElementById("bookmarks-list");
+                if (!list) return;
+
+                if (bookmarks.length === 0) {
+                    list.innerHTML = `<div style="text-align:center; padding: 20px; color: #555;">No bookmarks yet</div>`;
+                    return;
+                }
+
+                list.innerHTML = bookmarks.map((b, i) => `
+                    <div style="background: #26262b; padding: 10px; margin-bottom: 5px; border-radius: 6px; display: flex; justify-content: space-between; align-items: center;">
+                        <div style="cursor: pointer; flex: 1" onclick="navigateInTab('${activeTabId}', '${b.url}')">
+                            <div style="font-weight: 500">${b.title}</div>
+                            <div style="font-size: 11px; color: #888; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 200px;">${b.url}</div>
+                        </div>
+                        <button style="background: none; border: none; color: #ef4444; cursor: pointer;" onclick="deleteBookmark(${i})">×</button>
+                    </div>
+                `).join("");
+            }
+
+            function addBookmark() {
+                const title = document.getElementById("bookmark-title").value || "Untitled";
+                const url = document.getElementById("bookmark-url").value;
+                
+                if (!url) return;
+                
+                bookmarks.push({ title, url });
+                localStorage.setItem("vortex-bookmarks", JSON.stringify(bookmarks));
+                loadBookmarks();
+                
+                document.getElementById("bookmark-title").value = "";
+                document.getElementById("bookmark-url").value = "";
+                
+                const tab = tabs.find(t => t.id === activeTabId);
+                if (tab && tab.url === url) {
+                    document.getElementById("bookmark-current-btn").classList.add("bookmarked");
+                }
+            }
+            
+            function toggleBookmarkCurrentPage() {
+                const tab = tabs.find(t => t.id === activeTabId);
+                if (!tab || tab.isNewTab) return;
+                
+                const index = bookmarks.findIndex(b => b.url === tab.url);
+                if (index !== -1) {
+                    bookmarks.splice(index, 1);
+                    document.getElementById("bookmark-current-btn").classList.remove("bookmarked");
+                } else {
+                    bookmarks.push({ title: tab.title || tab.url, url: tab.url });
+                    document.getElementById("bookmark-current-btn").classList.add("bookmarked");
+                }
+                localStorage.setItem("vortex-bookmarks", JSON.stringify(bookmarks));
+                if (activePanelId === "bookmarks") loadBookmarks();
+            }
+
+            function deleteBookmark(index) {
+                bookmarks.splice(index, 1);
+                localStorage.setItem("vortex-bookmarks", JSON.stringify(bookmarks));
+                loadBookmarks();
+            }
+            
+            // Sidebar toggle
+            function toggleSidebar() {
+                document.getElementById("sidebar").classList.toggle("expanded");
+            }
+            
+            // Utilities
+            function startClock() {
+                setInterval(() => {
+                    const now = new Date();
+                    document.getElementById("current-time").textContent = now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                }, 1000);
+            }
+            
+            function updateStats() {
+                document.getElementById("tabs-count").textContent = tabs.length;
+                document.getElementById("bookmarks-count").textContent = bookmarks.length;
+            }
+            
+            function simulatePerformance() {
+                setInterval(() => {
+                    const cpu = Math.floor(Math.random() * 30) + 5;
+                    const ram = Math.floor(Math.random() * 40) + 20;
+                    
+                    document.getElementById("cpu-percent").textContent = cpu + "%";
+                    document.getElementById("cpu-fill").style.width = cpu + "%";
+                    
+                    document.getElementById("ram-percent").textContent = ram + "%";
+                    document.getElementById("ram-fill").style.width = ram + "%";
+                }, 2000);
+            }
+            
+            function clearData() {
+                if (confirm("Clear all data (Bookmarks, Quick Links, Settings)?")) {
+                    localStorage.removeItem("vortex-bookmarks");
+                    localStorage.removeItem("vortex-quick-links");
+                    localStorage.removeItem("vortex-proxy-type");
+                    localStorage.removeItem("vortex-custom-proxy");
+                    localStorage.removeItem("vortex-search-engine");
+                    localStorage.removeItem("vortex-dark-theme");
+                    location.reload();
+                }
+            }
+            
+            // Theme Handling
+            function toggleTheme() {
+                isDarkTheme = !isDarkTheme;
+                localStorage.setItem("vortex-dark-theme", isDarkTheme);
+                applyTheme();
+            }
+
+            function applyTheme() {
+                const themeCheckbox = document.querySelector('input[onchange="toggleTheme()"]');
+                if (themeCheckbox) {
+                    themeCheckbox.checked = isDarkTheme;
+                }
+                
+                if (isDarkTheme) {
+                    document.body.classList.remove('light-theme');
+                } else {
+                    document.body.classList.add('light-theme');
+                }
+            }
+            
+            // Gaming News Integration (Fixed)
+            async function loadGamingNews() {
+                const container = document.getElementById('gx-news-list');
+                if (!container) return;
+                
+                container.innerHTML = '<div style="padding: 20px; text-align: center; color: #888;">Loading live news...</div>';
+                
+                try {
+                    // Try Gamespot first (better images)
+                    const res = await fetch('https://api.rss2json.com/v1/api.json?rss_url=https://www.gamespot.com/feeds/news/');
+                    const data = await res.json();
+                    
+                    if (data.status === 'ok' && data.items.length > 0) {
+                        renderGamingNews(data.items, container);
+                    } else {
+                        // Fallback to IGN
+                        const res2 = await fetch('https://api.rss2json.com/v1/api.json?rss_url=https://www.ign.com/rss/articles/news');
+                        const data2 = await res2.json();
+                        if (data2.status === 'ok' && data2.items.length > 0) {
+                            renderGamingNews(data2.items, container);
+                        } else {
+                            throw new Error("No news found");
+                        }
+                    }
+                } catch (e) {
+                    console.error(e);
+                    container.innerHTML = `
+                        <div style="padding: 20px; text-align: center; color: #ff4444;">
+                            Failed to load news.<br>
+                            <button class="form-btn" style="margin-top:10px; padding: 5px 10px;" onclick="loadGamingNews()">Try Again</button>
+                        </div>`;
+                }
+            }
+
+            function renderGamingNews(items, container) {
+                 container.innerHTML = items.slice(0, 15).map(item => { 
+                    let img = '';
+                    if (item.enclosure && item.enclosure.link) img = item.enclosure.link;
+                    else if (item.thumbnail) img = item.thumbnail;
+                    
+                    // Use onerror to hide broken images
+                    const imgHTML = img ? `<img src="${img}" style="width: 100%; height: 140px; object-fit: cover; border-radius: 6px; margin-bottom: 8px; background: #2a2a2e;" onerror="this.style.display='none'">` : '';
+                    const date = new Date(item.pubDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+                    
+                    return `
+                        <div class="gx-news-item" onclick="window.open('${item.link}', '_blank')">
+                            ${imgHTML}
+                            <div class="gx-news-title">${item.title}</div>
+                            <div class="gx-news-date">${date}</div>
+                        </div>
+                    `;
+                }).join("");
+            }
+
+            // --- Drag and Drop Logic ---
+
+            function setupTabReordering() {
+                const tabsContainer = document.getElementById('tab-bar');
+                
+                tabsContainer.addEventListener('dragstart', (e) => {
+                    if (!e.target.classList.contains('tab')) {
+                        e.preventDefault(); // Only drag tabs
+                        return;
+                    }
+                    e.target.classList.add('dragging');
+                    // Store the ID to help with reordering logic if needed
+                    e.dataTransfer.setData('text/plain', e.target.dataset.tabId);
+                });
+
+                tabsContainer.addEventListener('dragend', (e) => {
+                    e.target.classList.remove('dragging');
+                    synchronizeTabsArray();
+                });
+
+                tabsContainer.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                    
+                    // Only allow dropping if we are dragging a tab
+                    const dragging = document.querySelector('.tab.dragging');
+                    if (!dragging) return;
+
+                    const afterElement = getDragAfterElement(tabsContainer, e.clientX);
+                    
+                    // We need to be careful not to drop after the 'new-tab-btn' or other buttons
+                    // The easiest way is to use insertBefore
+                    
+                    if (afterElement == null) {
+                        // If no after element (end of tabs), insert before new-tab-btn
+                        const newTabBtn = document.querySelector('.new-tab-btn');
+                        tabsContainer.insertBefore(dragging, newTabBtn);
+                    } else {
+                         // Check if afterElement is a tab. If it's a button, we might want to be careful.
+                         // Our getDragAfterElement filters for .tab:not(.dragging) so it should be fine.
+                        tabsContainer.insertBefore(dragging, afterElement);
+                    }
+                });
+            }
+
+            function getDragAfterElement(container, x) {
+                // Only consider .tab elements as valid drop targets reference
+                const draggableElements = [...container.querySelectorAll('.tab:not(.dragging)')];
+
+                return draggableElements.reduce((closest, child) => {
+                    const box = child.getBoundingClientRect();
+                    const boxCenter = box.left + box.width / 2;
+                    const offset = x - boxCenter;
+
+                    // We want the element whose center is just to the right of the cursor (offset is negative)
+                    if (offset < 0 && offset > closest.offset) {
+                        return { offset: offset, element: child };
+                    } else {
+                        return closest;
+                    }
+                }, { offset: Number.NEGATIVE_INFINITY }).element;
+            }
+
+            // Sync the internal 'tabs' array with the DOM order
+            function synchronizeTabsArray() {
+                const domTabs = document.querySelectorAll('.tab');
+                const newTabsArray = [];
+                
+                domTabs.forEach(domTab => {
+                    const id = domTab.dataset.tabId;
+                    const tabObj = tabs.find(t => t.id === id);
+                    if (tabObj) {
+                        newTabsArray.push(tabObj);
+                    }
+                });
+                
+                // Replace the global tabs array with the reordered one
+                // We keep the object references so state is preserved
+                tabs = newTabsArray;
+            }
+            
+            // Start the app
+            window.onload = init;
+        </script>
+    </body>
+</html>
