@@ -1,4 +1,4 @@
-# Vortex Web (v10)
+# Vortex Web (v11)
 
 ![Vortex Web Screenshot](https://raw.githubusercontent.com/Ren23447/Vortex-Web/refs/heads/main/Screenshot.png)
 
