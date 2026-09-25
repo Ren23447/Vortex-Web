@@ -42,12 +42,14 @@
                 flex-direction: column;
                 align-items: center;
                 padding: 10px 0;
-                transition: width 0.3s ease;
+                transition: width 0.2s ease;
+                flex-shrink: 0;
+                position: relative;
                 z-index: 1000;
             }
 
             .sidebar.expanded {
-                width: 300px;
+                width: 60px;
             }
 
             .sidebar-icon {
@@ -87,6 +89,7 @@
                 transition: transform 0.3s ease;
                 overflow-y: auto;
                 z-index: 999;
+                box-shadow: 12px 0 28px rgba(0, 0, 0, 0.22);
             }
 
             .sidebar-panel.active {
@@ -155,7 +158,10 @@
                 padding: 0 12px;
                 cursor: pointer;
                 position: relative;
-                transition: all 0.2s ease;
+                transition: transform 0.16s ease, background 0.2s ease, box-shadow 0.16s ease;
+                will-change: transform;
+                touch-action: none;
+                user-select: none;
             }
 
             .tab:hover {
@@ -164,11 +170,11 @@
 
             .tab.active {
                 background: #2a2a2e;
-                border-bottom: 2px solid #ff1b54;
+                border-bottom: 2px solid var(--accent-color, #ff1b54);
             }
             
             .tab.incognito-tab {
-                border-bottom-color: #9333ea; /* Purple for incognito */
+                border-bottom-color: var(--accent-color, #ff1b54);
             }
             .tab.incognito-tab .tab-icon {
                 color: #9333ea;
@@ -216,13 +222,41 @@
                 background: #ff1b54;
                 color: #fff;
             }
+
+            .tab-preview {
+                position: fixed;
+                width: 280px;
+                padding: 8px;
+                background: #11131b;
+                border: 1px solid var(--accent-color, #ff1b54);
+                border-radius: 4px;
+                box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6), 0 0 20px color-mix(in srgb, var(--accent-color, #ff1b54) 18%, transparent);
+                pointer-events: none;
+                opacity: 0;
+                transform: translateY(-4px);
+                transition: opacity 0.16s ease, transform 0.16s ease;
+                z-index: 3000;
+            }
+
+            .tab-preview.visible { opacity: 1; transform: translateY(0); }
+            .tab-preview-thumb { height: 132px; overflow: hidden; background: linear-gradient(135deg, #1e2435, #11131b); clip-path: polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px); }
+            .tab-preview-thumb iframe { width: 286%; height: 286%; border: 0; transform: scale(0.35); transform-origin: top left; pointer-events: none; }
+            .tab-preview-home { display: grid; place-items: center; height: 100%; color: var(--accent-color, #ff1b54); font-size: 28px; font-weight: 900; letter-spacing: 3px; }
+            .tab-preview-title { padding: 8px 4px 2px; color: #fff; font-size: 12px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+            .tab-preview-url { padding: 0 4px 3px; color: #8f8f9d; font-size: 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
             
             /* Dragging styles */
             .tab.dragging {
                 opacity: 0.5;
                 background-color: #3a3a42;
                 border: 1px dashed #555;
+                box-shadow: 0 8px 20px rgba(0, 0, 0, 0.35);
+                transform: scale(1.02) rotate(-1deg);
+                transition: none;
             }
+
+            .tab.drop-before { transform: translateX(8px); }
+            .tab.drop-after { transform: translateX(-8px); }
 
             .new-tab-btn, .home-btn, .incognito-btn {
                 width: 32px;
@@ -265,6 +299,54 @@
                 align-items: center;
                 gap: 10px;
                 border-bottom: 1px solid #2a2a2e;
+            }
+
+            .bookmarks-bar {
+                display: flex;
+                align-items: center;
+                gap: 6px;
+                min-height: 30px;
+                padding: 4px 12px;
+                background: #1a1a1f;
+                border-bottom: 1px solid #2a2a2e;
+                overflow-x: auto;
+            }
+
+            .bookmarks-bar:empty { display: none; }
+
+            .bookmark-chip {
+                display: inline-flex;
+                align-items: center;
+                gap: 6px;
+                flex: 0 0 auto;
+                max-width: 180px;
+                padding: 4px 8px;
+                border: 1px solid transparent;
+                border-radius: 5px;
+                color: #b1b1b8;
+                font-size: 11px;
+                cursor: pointer;
+                white-space: nowrap;
+            }
+
+            .bookmark-chip:hover { background: #2a2a2e; border-color: #3a3a42; color: #fff; }
+            .bookmark-chip span { overflow: hidden; text-overflow: ellipsis; }
+
+            .bookmark-drop-zone {
+                margin: 16px 0;
+                padding: 18px 12px;
+                border: 1px dashed #555;
+                border-radius: 8px;
+                color: #8f8f9d;
+                text-align: center;
+                font-size: 12px;
+                transition: border-color 0.2s, background 0.2s, color 0.2s;
+            }
+
+            .bookmark-drop-zone.drag-over {
+                border-color: var(--accent-color, #ff1b54);
+                background: rgba(255, 27, 84, 0.1);
+                color: #fff;
             }
 
             .nav-buttons {
@@ -385,6 +467,35 @@
                 border: none;
             }
 
+            .tab-fallback {
+                height: 100%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                padding: 32px;
+                text-align: center;
+                background: #202026;
+            }
+
+            .tab-fallback-card {
+                width: min(460px, 100%);
+                padding: 28px;
+                border: 1px solid #3a3a42;
+                border-radius: 10px;
+                background: #26262b;
+            }
+
+            .tab-fallback-card p {
+                margin: 10px 0 20px;
+                color: #b1b1b8;
+                line-height: 1.5;
+            }
+
+            .tab-fallback-card .form-btn {
+                display: inline-block;
+                text-decoration: none;
+            }
+
             /* New tab page */
             .new-tab-page {
                 width: 100%;
@@ -395,7 +506,10 @@
                 justify-content: center;
                 padding: 40px;
                 overflow-y: auto;
-                background: url("https://img.freepik.com/premium-vector/realistic-abstracts-geometric-background_1318093-16790.jpg") no-repeat center center;
+                background:
+                    radial-gradient(circle at 50% 42%, color-mix(in srgb, var(--accent-color, #ff1b54) 22%, transparent), transparent 30%),
+                    linear-gradient(135deg, rgba(10, 10, 16, 0.9), rgba(29, 29, 33, 0.46)),
+                    url("https://img.freepik.com/premium-vector/realistic-abstracts-geometric-background_1318093-16790.jpg") no-repeat center center;
                 background-size: cover;
                 position: relative;
             }
@@ -516,19 +630,49 @@
                 max-width: 600px;
                 margin-bottom: 50px;
                 position: relative;
+                z-index: 3;
+                padding: 14px;
+                border: 1px solid rgba(255, 255, 255, 0.13);
+                background: rgba(15, 15, 21, 0.42);
+                box-shadow: 0 22px 70px rgba(0, 0, 0, 0.42), inset 0 0 32px rgba(255, 27, 84, 0.06);
+                backdrop-filter: blur(14px);
+                clip-path: polygon(18px 0, 100% 0, 100% calc(100% - 18px), calc(100% - 18px) 100%, 0 100%, 0 18px);
+            }
+
+            .search-container::before,
+            .search-container::after {
+                content: "";
+                position: absolute;
+                pointer-events: none;
+            }
+
+            .search-container::before {
+                inset: -1px;
+                border: 1px solid rgba(255, 27, 84, 0.42);
+                clip-path: polygon(18px 0, 100% 0, 100% calc(100% - 18px), calc(100% - 18px) 100%, 0 100%, 0 18px);
+            }
+
+            .search-container::after {
+                width: 70px;
+                height: 2px;
+                left: 26px;
+                top: -1px;
+                background: var(--accent-color, #ff1b54);
+                box-shadow: 0 0 18px var(--accent-color, #ff1b54);
             }
 
             .search-box {
                 width: 100%;
                 background: rgba(38, 38, 43, 0.9);
-                border: 2px solid #3a3a42;
+                border: 2px solid rgba(255, 255, 255, 0.14);
                 clip-path: polygon(15px 0, 100% 0, 100% calc(100% - 15px), calc(100% - 15px) 100%, 0 100%, 0 15px);
                 padding: 16px 70px 16px 20px;
                 font-size: 16px;
                 color: #fff;
                 outline: none;
                 transition: all 0.3s ease;
-                backdrop-filter: blur(5px);
+                backdrop-filter: blur(10px);
+                box-shadow: inset 0 0 24px rgba(0, 0, 0, 0.18);
             }
 
             .search-box:focus {
@@ -658,6 +802,50 @@
                 color: #ff1b54;
             }
 
+            .metric-chart {
+                width: 100%;
+                height: 84px;
+                display: block;
+                margin-top: 10px;
+                background: #16161a;
+                border-radius: 6px;
+            }
+
+            .metric-source {
+                margin-top: 8px;
+                color: #8f8f9d;
+                font-size: 11px;
+            }
+
+            .mod-controls {
+                display: grid;
+                gap: 8px;
+                width: 100%;
+                margin: 8px 0 0 39px;
+            }
+
+            .audio-player {
+                width: 100%;
+                height: 28px;
+                margin-top: 8px;
+            }
+
+            .retro-mode .browser {
+                filter: contrast(1.18) saturate(1.25);
+                image-rendering: pixelated;
+            }
+
+            .retro-mode .browser::after {
+                content: "";
+                position: fixed;
+                inset: 0;
+                pointer-events: none;
+                z-index: 5000;
+                opacity: 0.16;
+                background: repeating-linear-gradient(0deg, rgba(255,255,255,.35) 0 1px, transparent 1px 4px);
+                mix-blend-mode: screen;
+            }
+
             /* Tooltip */
             .tooltip {
                 position: absolute;
@@ -733,6 +921,85 @@
                 color: #ff1b54;
             }
 
+            #mods-modal {
+                background:
+                    radial-gradient(circle at 15% 10%, color-mix(in srgb, var(--accent-color, #ff1b54) 18%, transparent), transparent 34%),
+                    rgba(3, 4, 9, 0.82);
+            }
+
+            #mods-modal .modal {
+                max-width: 580px;
+                border-color: color-mix(in srgb, var(--accent-color, #ff1b54) 42%, #2a2a2e);
+                background: #11131b;
+                box-shadow: 0 24px 90px rgba(0, 0, 0, 0.72), 0 0 42px color-mix(in srgb, var(--accent-color, #ff1b54) 14%, transparent);
+                border-radius: 4px;
+                clip-path: polygon(14px 0, 100% 0, 100% calc(100% - 14px), calc(100% - 14px) 100%, 0 100%, 0 14px);
+            }
+
+            #mods-modal .modal-header {
+                padding: 16px 18px;
+                background: linear-gradient(120deg, #1b1e2b, #15161e 62%, color-mix(in srgb, var(--accent-color, #ff1b54) 12%, #15161e));
+                border-bottom-color: color-mix(in srgb, var(--accent-color, #ff1b54) 30%, #2a2a2e);
+            }
+
+            .mods-heading { display: flex; flex-direction: column; gap: 3px; }
+            .mods-eyebrow { color: var(--accent-color, #ff1b54); font-size: 10px; font-weight: 800; letter-spacing: 2px; text-transform: uppercase; }
+            .mods-title { color: #fff; font-size: 22px; letter-spacing: 0.5px; }
+            .mods-status { padding: 5px 8px; border: 1px solid color-mix(in srgb, var(--accent-color, #ff1b54) 55%, transparent); border-radius: 999px; color: var(--accent-color, #ff1b54); font-size: 10px; letter-spacing: 1px; white-space: nowrap; }
+
+            #mods-modal .modal-content { padding: 12px; background: linear-gradient(180deg, #151722, #101117); }
+            #mods-modal .mod-item { position: relative; gap: 10px; margin-bottom: 8px; padding: 12px 14px; overflow: hidden; border: 1px solid #2d3140; border-radius: 3px; background: linear-gradient(135deg, rgba(35, 39, 54, 0.96), rgba(19, 21, 30, 0.96)); box-shadow: inset 0 1px rgba(255, 255, 255, 0.04), 0 8px 18px rgba(0, 0, 0, 0.18); transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease; clip-path: polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px); }
+            #mods-modal .mod-item::before { content: ""; position: absolute; top: 0; bottom: 0; left: 0; width: 3px; background: var(--accent-color, #ff1b54); box-shadow: 0 0 18px var(--accent-color, #ff1b54); }
+            #mods-modal .mod-item:hover { transform: translateY(-2px); border-color: color-mix(in srgb, var(--accent-color, #ff1b54) 52%, #2d3140); box-shadow: inset 0 1px rgba(255, 255, 255, 0.06), 0 14px 30px rgba(0, 0, 0, 0.28); }
+            #mods-modal .mod-item:last-child { margin-bottom: 0; }
+            #mods-modal .mod-info { flex: 1; min-width: 190px; }
+            #mods-modal .mod-icon { display: grid; place-items: center; width: 36px; height: 36px; border: 1px solid color-mix(in srgb, var(--accent-color, #ff1b54) 48%, #3a3a42); border-radius: 3px; background: color-mix(in srgb, var(--accent-color, #ff1b54) 12%, #20232f); filter: drop-shadow(0 0 8px color-mix(in srgb, var(--accent-color, #ff1b54) 30%, transparent)); }
+            #mods-modal .mod-details h4 { color: #fff; font-size: 15px; }
+            #mods-modal .mod-details p { color: #969bad; line-height: 1.35; }
+            #mods-modal .mod-switch { flex-shrink: 0; }
+            #mods-modal .mod-controls { flex-basis: 100%; width: 100%; margin: 2px 0 0 0; padding-left: 56px; }
+            #mods-modal .form-input { background: #0e1017; border-color: #343949; color: #eef0f7; }
+            #mods-modal .form-input:focus { border-color: var(--accent-color, #ff1b54); box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent-color, #ff1b54) 18%, transparent); }
+            #mods-modal .audio-player { accent-color: var(--accent-color, #ff1b54); }
+            #mods-modal .mods-custom-area { margin-top: 12px; padding: 14px; border: 1px dashed #343949; border-radius: 3px; background: rgba(12, 14, 21, 0.7); clip-path: polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px); }
+            .light-theme #mods-modal .modal { background: #f3f4f8; }
+            .light-theme #mods-modal .modal-header { background: #fff; }
+            .light-theme #mods-modal .modal-content { background: #eef0f5; }
+            .light-theme #mods-modal .mod-item { background: linear-gradient(135deg, #fff, #e9ebf2); }
+            .light-theme #mods-modal .form-input { background: #fff; color: #1d1d21; }
+
+            #proxy-modal {
+                background: radial-gradient(circle at 80% 12%, color-mix(in srgb, var(--accent-color, #ff1b54) 16%, transparent), transparent 36%), rgba(3, 4, 9, 0.82);
+            }
+
+            #proxy-modal .modal {
+                max-width: 560px;
+                border-radius: 4px;
+                border-color: color-mix(in srgb, var(--accent-color, #ff1b54) 42%, #2a2a2e);
+                background: #11131b;
+                clip-path: polygon(14px 0, 100% 0, 100% calc(100% - 14px), calc(100% - 14px) 100%, 0 100%, 0 14px);
+                box-shadow: 0 24px 90px rgba(0, 0, 0, 0.72), 0 0 42px color-mix(in srgb, var(--accent-color, #ff1b54) 14%, transparent);
+            }
+
+            #proxy-modal .modal-header { padding: 16px 18px; background: linear-gradient(120deg, #1b1e2b, #15161e 62%, color-mix(in srgb, var(--accent-color, #ff1b54) 12%, #15161e)); border-bottom-color: color-mix(in srgb, var(--accent-color, #ff1b54) 30%, #2a2a2e); }
+            #proxy-modal .modal-content { padding: 14px; background: linear-gradient(180deg, #151722, #101117); }
+            #proxy-modal .proxy-list { gap: 8px; }
+            #proxy-modal .proxy-option { position: relative; padding: 13px 14px; min-height: 48px; border-radius: 3px; border-color: #2d3140; background: linear-gradient(135deg, rgba(35, 39, 54, 0.96), rgba(19, 21, 30, 0.96)); clip-path: polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px); }
+            #proxy-modal .proxy-option::before { content: ""; position: absolute; top: 0; bottom: 0; left: 0; width: 3px; background: transparent; }
+            #proxy-modal .proxy-option:hover { border-color: color-mix(in srgb, var(--accent-color, #ff1b54) 50%, #2d3140); transform: translateX(2px); }
+            #proxy-modal .proxy-option.selected { border-color: var(--accent-color, #ff1b54); background: color-mix(in srgb, var(--accent-color, #ff1b54) 12%, #1b1e2b); }
+            #proxy-modal .proxy-option.selected::before { background: var(--accent-color, #ff1b54); box-shadow: 0 0 16px var(--accent-color, #ff1b54); }
+            #proxy-modal .proxy-option span { padding-left: 6px; }
+            #proxy-modal .proxy-backend { margin-top: 14px !important; padding: 14px !important; border: 1px dashed #343949; background: rgba(12, 14, 21, 0.7); clip-path: polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px); }
+            #proxy-modal .proxy-backend h4 { color: #fff; margin-bottom: 10px; }
+            #proxy-modal .form-input { background: #0e1017; border-color: #343949; color: #eef0f7; }
+            #proxy-modal .form-input:focus { border-color: var(--accent-color, #ff1b54); box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent-color, #ff1b54) 18%, transparent); }
+            .light-theme #proxy-modal .modal { background: #f3f4f8; }
+            .light-theme #proxy-modal .modal-header { background: #fff; }
+            .light-theme #proxy-modal .modal-content { background: #eef0f5; }
+            .light-theme #proxy-modal .proxy-option { background: linear-gradient(135deg, #fff, #e9ebf2); }
+            .light-theme #proxy-modal .form-input { background: #fff; color: #1d1d21; }
+
             .modal-content {
                 padding: 20px;
             }
@@ -741,6 +1008,7 @@
                 display: flex;
                 justify-content: space-between;
                 align-items: center;
+                flex-wrap: wrap;
                 padding: 15px 0;
                 border-bottom: 1px solid #2a2a2e;
             }
@@ -934,6 +1202,102 @@
                 margin-bottom: 15px;
             }
 
+            .setting-select {
+                width: 150px;
+                padding: 8px;
+            }
+
+            .accent-picker {
+                display: grid;
+                grid-template-columns: repeat(4, 28px);
+                gap: 7px;
+                padding: 6px;
+                border: 1px solid #3a3a42;
+                border-radius: 9px;
+                background: #202026;
+            }
+
+            .accent-swatch {
+                width: 28px;
+                height: 28px;
+                border: 2px solid transparent;
+                border-radius: 7px;
+                cursor: pointer;
+                box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.2);
+                transition: transform 0.16s ease, border-color 0.16s ease;
+            }
+
+            .accent-swatch:hover { transform: translateY(-2px); }
+            .accent-swatch.active { border-color: #fff; box-shadow: 0 0 0 2px var(--accent-color); }
+            .accent-swatch.pink { background: #ff1b54; }
+            .accent-swatch.cyan { background: #06b6d4; }
+            .accent-swatch.green { background: #22c55e; }
+            .accent-swatch.orange { background: #f97316; }
+            .accent-swatch.violet { background: #8b5cf6; }
+            .accent-swatch.gold { background: #eab308; }
+            .accent-swatch.ice { background: #60a5fa; }
+            .accent-swatch.white { background: #e5e7eb; }
+
+            .settings-note {
+                color: #8f8f9d;
+                font-size: 12px;
+                line-height: 1.4;
+                margin-top: -6px;
+                margin-bottom: 15px;
+            }
+
+            body.accent-pink { --accent-color: #ff1b54; }
+            body.accent-cyan { --accent-color: #06b6d4; }
+            body.accent-green { --accent-color: #22c55e; }
+            body.accent-orange { --accent-color: #f97316; }
+            body.accent-violet { --accent-color: #8b5cf6; }
+            body.accent-gold { --accent-color: #eab308; }
+            body.accent-ice { --accent-color: #60a5fa; }
+            body.accent-white { --accent-color: #e5e7eb; }
+
+            body.accent-cyan .sidebar-icon:hover,
+            body.accent-cyan .sidebar-icon.active,
+            body.accent-cyan .form-btn,
+            body.accent-cyan .search-btn { background: #06b6d4; }
+            body.accent-green .sidebar-icon:hover,
+            body.accent-green .sidebar-icon.active,
+            body.accent-green .form-btn,
+            body.accent-green .search-btn { background: #22c55e; }
+            body.accent-orange .sidebar-icon:hover,
+            body.accent-orange .sidebar-icon.active,
+            body.accent-orange .form-btn,
+            body.accent-orange .search-btn { background: #f97316; }
+            body.accent-violet .sidebar-icon:hover,
+            body.accent-violet .sidebar-icon.active,
+            body.accent-violet .form-btn,
+            body.accent-violet .search-btn { background: #8b5cf6; }
+            body.accent-gold .sidebar-icon:hover,
+            body.accent-gold .sidebar-icon.active,
+            body.accent-gold .form-btn,
+            body.accent-gold .search-btn { background: #eab308; color: #111; }
+            body.accent-ice .sidebar-icon:hover,
+            body.accent-ice .sidebar-icon.active,
+            body.accent-ice .form-btn,
+            body.accent-ice .search-btn { background: #60a5fa; }
+            body.accent-white .sidebar-icon:hover,
+            body.accent-white .sidebar-icon.active,
+            body.accent-white .form-btn,
+            body.accent-white .search-btn { background: #e5e7eb; color: #111; }
+
+            body.reduce-motion *, body.reduce-motion *::before, body.reduce-motion *::after {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+                scroll-behavior: auto !important;
+            }
+
+            /* Keep the settings panel readable on compact screens. */
+            @media (max-width: 560px) {
+                .sidebar-panel {
+                    width: min(340px, calc(100vw - 60px));
+                }
+            }
+
             /* Scrollbar */
             ::-webkit-scrollbar {
                 width: 8px;
@@ -1004,7 +1368,7 @@
             .light-theme .tab-bar { background: #ffffff !important; border-bottom: 1px solid #d0d0d5 !important; }
             .light-theme .tab { background: #e0e0e5 !important; }
             .light-theme .tab:hover { background: #d0d0d5 !important; }
-            .light-theme .tab.active { background: #f0f0f4 !important; border-bottom: 2px solid #ff1b54 !important; }
+            .light-theme .tab.active { background: #f0f0f4 !important; border-bottom: 2px solid var(--accent-color, #ff1b54) !important; }
             .light-theme .tab-title { color: #5a5a65 !important; }
             .light-theme .tab.active .tab-title { color: #1d1d21 !important; }
             .light-theme .address-bar { background: #ffffff !important; border-bottom: 1px solid #d0d0d5 !important; }
@@ -1165,6 +1529,7 @@
                         <div class="form-group"><label class="form-label">URL</label><input type="text" class="form-input" id="bookmark-url" placeholder="https://example.com" /></div>
                         <button class="form-btn" onclick="addBookmark()">Add Bookmark</button>
                     </div>
+                    <div class="bookmark-drop-zone" id="bookmark-drop-zone">Drag a quick link here to save it</div>
                     <div id="bookmarks-list"></div>
                 </div>
             </div>
@@ -1178,11 +1543,14 @@
                             <div style="margin-bottom: 15px">
                                 <div style="display: flex; justify-content: space-between; margin-bottom: 5px"><span>CPU Usage</span><span id="cpu-percent">0%</span></div>
                                 <div class="cpu-bar"><div class="cpu-fill" id="cpu-fill" style="width: 0%"></div></div>
+                                <canvas class="metric-chart" id="cpu-chart" width="280" height="84"></canvas>
                             </div>
                             <div>
                                 <div style="display: flex; justify-content: space-between; margin-bottom: 5px"><span>RAM Usage</span><span id="ram-percent">0%</span></div>
                                 <div class="ram-bar"><div class="ram-fill" id="ram-fill" style="width: 0%"></div></div>
+                                <canvas class="metric-chart" id="ram-chart" width="280" height="84"></canvas>
                             </div>
+                            <div class="metric-source" id="metric-source">Live browser estimate</div>
                         </div>
                     </div>
                     <div class="widget">
@@ -1225,15 +1593,29 @@
                         </div>
                          <div class="setting-item">
                             <span>Enable Animations</span>
-                            <label class="mod-switch"><input type="checkbox" checked><span class="mod-slider"></span></label>
+                            <label class="mod-switch"><input type="checkbox" checked id="setting-animations" onchange="toggleAnimations(this.checked)"><span class="mod-slider"></span></label>
+                        </div>
+                        <div class="setting-item">
+                            <span>Accent Color</span>
+                            <div class="accent-picker" id="accent-picker" aria-label="Accent color">
+                                <button class="accent-swatch pink" title="Pink" onclick="changeAccent('pink')"></button>
+                                <button class="accent-swatch cyan" title="Cyan" onclick="changeAccent('cyan')"></button>
+                                <button class="accent-swatch green" title="Green" onclick="changeAccent('green')"></button>
+                                <button class="accent-swatch orange" title="Orange" onclick="changeAccent('orange')"></button>
+                                <button class="accent-swatch violet" title="Violet" onclick="changeAccent('violet')"></button>
+                                <button class="accent-swatch gold" title="Gold" onclick="changeAccent('gold')"></button>
+                                <button class="accent-swatch ice" title="Ice" onclick="changeAccent('ice')"></button>
+                                <button class="accent-swatch white" title="White" onclick="changeAccent('white')"></button>
+                            </div>
                         </div>
                     </div>
                     <div class="settings-section">
                         <h3>Privacy</h3>
                          <div class="setting-item">
                             <span>Block Ads</span>
-                            <label class="mod-switch"><input type="checkbox" checked><span class="mod-slider"></span></label>
+                            <label class="mod-switch"><input type="checkbox" checked id="setting-ad-block" onchange="toggleAdBlocking(this.checked)"><span class="mod-slider"></span></label>
                         </div>
+                        <p class="settings-note">This filters ad-like frames in this app. A Chrome extension blocker is required to filter ads inside cross-origin pages.</p>
                         <div class="setting-item">
                             <span>Do Not Track</span>
                             <label class="mod-switch"><input type="checkbox"><span class="mod-slider"></span></label>
@@ -1246,9 +1628,9 @@
                      <div class="settings-section">
                         <h3>Search Engine</h3>
                         <select class="form-input" onchange="changeSearchEngine(this.value)">
-                            <option value="google">Google</option>
                             <option value="bing">Bing</option>
                             <option value="duckduckgo">DuckDuckGo</option>
+                            <option value="google">Google (may verify)</option>
                         </select>
                     </div>
                      <div class="settings-section">
@@ -1312,6 +1694,7 @@
                     </button>
                 </div>
 
+                <div class="bookmarks-bar" id="bookmarks-bar" aria-label="Bookmarks bar"></div>
                 <div class="loading" id="loading"></div>
                 <div class="content-area" id="content-area">
                     <!-- Tab contents will be inserted here -->
@@ -1323,7 +1706,11 @@
         <div class="modal-overlay" id="mods-modal">
             <div class="modal">
                 <div class="modal-header">
-                    <span>Vortex Mods</span>
+                    <div class="mods-heading">
+                        <span class="mods-eyebrow">VORTEX // MODULES</span>
+                        <span class="mods-title">Vortex Mods</span>
+                    </div>
+                    <span class="mods-status">SYSTEM ONLINE</span>
                     <span class="modal-close" onclick="closeMods()">×</span>
                 </div>
                 <div class="modal-content">
@@ -1332,24 +1719,39 @@
                             <div class="mod-icon">🎵</div>
                             <div class="mod-details"><h4>Background Music</h4><p>Ambient cyberpunk sounds</p></div>
                         </div>
-                        <label class="mod-switch"><input type="checkbox"><span class="mod-slider"></span></label>
+                        <label class="mod-switch"><input type="checkbox" id="music-enabled" onchange="toggleMusic(this.checked)"><span class="mod-slider"></span></label>
+                        <div class="mod-controls">
+                            <select class="form-input" id="music-station" onchange="changeMusicStation(this.value)">
+                                <option value="https://ice1.somafm.com/groovesalad-128-mp3">SomaFM Groove Salad</option>
+                                <option value="https://ice1.somafm.com/dronezone-128-mp3">SomaFM Drone Zone</option>
+                                <option value="https://ice1.somafm.com/defcon-128-mp3">SomaFM DEF CON Radio</option>
+                            </select>
+                            <audio class="audio-player" id="music-player" controls loop></audio>
+                        </div>
                     </div>
                     <div class="mod-item">
                         <div class="mod-info">
                             <div class="mod-icon">⌨️</div>
                             <div class="mod-details"><h4>Keyboard Sounds</h4><p>Mechanical click effects</p></div>
                         </div>
-                        <label class="mod-switch"><input type="checkbox" checked><span class="mod-slider"></span></label>
+                        <label class="mod-switch"><input type="checkbox" id="keyboard-enabled" onchange="toggleKeyboardSounds(this.checked)"><span class="mod-slider"></span></label>
+                        <div class="mod-controls">
+                            <select class="form-input" id="keyboard-sound" onchange="changeKeyboardSound(this.value)">
+                                <option value="click">Mechanical Click</option>
+                                <option value="typewriter">Typewriter</option>
+                                <option value="synth">Soft Synth</option>
+                            </select>
+                        </div>
                     </div>
                      <div class="mod-item">
                         <div class="mod-info">
                             <div class="mod-icon">👾</div>
                             <div class="mod-details"><h4>Retro Mode</h4><p>Pixelate the UI</p></div>
                         </div>
-                        <label class="mod-switch"><input type="checkbox"><span class="mod-slider"></span></label>
+                        <label class="mod-switch"><input type="checkbox" id="retro-enabled" onchange="toggleRetroMode(this.checked)"><span class="mod-slider"></span></label>
                     </div>
                     
-                    <div style="margin-top: 20px; border-top: 1px solid #3a3a42; padding-top: 15px;">
+                    <div class="mods-custom-area">
                         <h4 style="margin-bottom: 10px;">Add Custom HTML Mod</h4>
                         <div class="form-group">
                             <label class="form-label">Mod Name</label>
@@ -1387,7 +1789,11 @@
         <div class="modal-overlay" id="proxy-modal">
              <div class="modal">
                 <div class="modal-header">
-                    <span>Proxy Settings</span>
+                    <div class="mods-heading">
+                        <span class="mods-eyebrow">VORTEX // NETWORK</span>
+                        <span class="mods-title">Proxy Settings</span>
+                    </div>
+                    <span class="mods-status">ROUTE CONTROL</span>
                     <span class="modal-close" onclick="closeProxyModal()">×</span>
                 </div>
                 <div class="modal-content">
@@ -1396,11 +1802,14 @@
                             <span>Direct (No Proxy)</span>
                          </div>
                          <div class="proxy-option" onclick="selectProxy('ultraviolet')" id="proxy-ultraviolet">
-                            <span>Ultraviolet (Recommended)</span>
+                                     <span>Ultraviolet backend (configure below)</span>
+                                 </div>
+                                         <div class="proxy-option" onclick="selectProxy('tab')" id="proxy-tab">
+                                             <span>Browser tab fallback</span>
                          </div>
                     </div>
                     
-                    <div style="margin-top: 20px; border-top: 1px solid #3a3a42; padding-top: 15px;">
+                    <div class="proxy-backend">
                         <h4 style="margin-bottom: 10px;">Custom Backend Server</h4>
                         <div class="form-group">
                             <label class="form-label">Proxy URL Prefix</label>
@@ -1424,20 +1833,44 @@
             // Proxy State
             let currentProxy = localStorage.getItem("vortex-proxy-type") || "direct";
             let customProxyUrl = localStorage.getItem("vortex-custom-proxy") || "";
+            let adBlockingEnabled = localStorage.getItem("vortex-ad-blocking") !== "false";
+            let selectedAccent = localStorage.getItem("vortex-accent") || "pink";
+            let animationsEnabled = localStorage.getItem("vortex-animations") !== "false";
             
             // Search Engine State
-            let currentSearchEngine = localStorage.getItem("vortex-search-engine") || "google";
+            let currentSearchEngine = localStorage.getItem("vortex-search-engine") || "bing";
 
             // Theme State
             let isDarkTheme = localStorage.getItem("vortex-dark-theme") !== "false";
 
             // Custom Mods State
             let customMods = JSON.parse(localStorage.getItem("vortex-custom-mods") || "[]");
+            let cpuHistory = [];
+            let ramHistory = [];
+            let musicEnabled = localStorage.getItem("vortex-music-enabled") === "true";
+            let keyboardSoundsEnabled = localStorage.getItem("vortex-keyboard-enabled") === "true";
+            let keyboardSoundType = localStorage.getItem("vortex-keyboard-sound") || "click";
+            let musicStation = localStorage.getItem("vortex-music-station") || "https://ice1.somafm.com/groovesalad-128-mp3";
+            let retroEnabled = localStorage.getItem("vortex-retro-enabled") === "true";
+
+            window.addEventListener("message", (event) => {
+                if (event.data?.type === "vortex-frame-navigation" && event.data.url) {
+                    navigateInTab(activeTabId, event.data.url);
+                    return;
+                }
+                if (event.source !== window) return;
+                if (event.source !== window || event.data?.type !== "vortex-system-metrics-result" || !event.data.metrics) return;
+                updateMetric("cpu", Math.max(0, Math.min(100, event.data.metrics.cpu)));
+                updateMetric("ram", Math.max(0, Math.min(100, event.data.metrics.ram)));
+                const source = document.getElementById("metric-source");
+                if (source) source.textContent = "Live system metrics from Vortex Chrome companion";
+            });
 
             // Initialize app
             function init() {
                 // Load theme
                 applyTheme();
+                applyAppearanceSettings();
                 
                 // Initialize Custom Mods
                 renderCustomMods();
@@ -1466,21 +1899,30 @@
                 
                 // Set initial search engine selection in settings
                 const searchSelect = document.querySelector('select[onchange="changeSearchEngine(this.value)"]');
+                if (currentSearchEngine === "google") {
+                    currentSearchEngine = "bing";
+                    localStorage.setItem("vortex-search-engine", currentSearchEngine);
+                }
                 if (searchSelect) searchSelect.value = currentSearchEngine;
 
-                // Initial tab is Home Page
-                createNewTab(true);
+                // The app always opens with one real Home Page tab.
+                if (tabs.length === 0) createNewTab(true);
+                else switchTab(tabs[0].id);
                 loadBookmarks();
+                renderBookmarksBar();
                 startClock();
                 simulatePerformance();
                 updateStats();
                 updateProxyUI();
+                renderBookmarksBar();
+                applyModSettings();
                 
                 // Load News
                 loadGamingNews();
 
                 // Setup Drag and Drop for Tabs
                 setupTabReordering();
+                setupBookmarkDropZone();
             }
             
             // Search Engine Change
@@ -1511,8 +1953,14 @@
                 const tabElement = document.createElement("div");
                 tabElement.className = `tab ${isIncognito ? 'incognito-tab' : ''}`;
                 tabElement.dataset.tabId = tabId;
-                tabElement.draggable = true; // Make Draggable
-                tabElement.onclick = () => switchTab(tabId);
+                tabElement.draggable = false;
+                tabElement.onclick = () => {
+                    if (tabElement.dataset.suppressClick === "true") {
+                        delete tabElement.dataset.suppressClick;
+                        return;
+                    }
+                    switchTab(tabId);
+                };
                 
                 // Incognito Icon vs Regular Icon
                 const iconSvg = isIncognito 
@@ -1538,7 +1986,7 @@
                 
                 // Content for new tab page
                 contentElement.innerHTML = `
-                    <div class="new-tab-page">
+                    <div class="new-tab-page home-page" data-home-page="true">
                         <div class="vortex-logo" data-text="VORTEX">VORTEX</div>
                         ${isIncognito ? '<div style="margin-bottom: 20px; color: #a855f7;">Incognito Mode</div>' : ''}
                         <div class="search-container">
@@ -1557,7 +2005,7 @@
                 `;
 
                 document.getElementById("content-area").appendChild(contentElement);
-
+                setupTabPreview(tabElement, tabId);
                 if (!isIncognito) {
                     renderQuickLinks(tabId);
                 }
@@ -1630,27 +2078,88 @@
                 }
             }
 
+            function setupTabPreview(tabElement, tabId) {
+                let previewTimer;
+                tabElement.addEventListener("mouseenter", () => {
+                    clearTimeout(previewTimer);
+                    previewTimer = setTimeout(() => showTabPreview(tabId, tabElement), 260);
+                });
+                tabElement.addEventListener("mouseleave", () => {
+                    clearTimeout(previewTimer);
+                    hideTabPreview();
+                });
+            }
+
+            function showTabPreview(tabId, tabElement) {
+                hideTabPreview();
+                const tab = tabs.find((item) => item.id === tabId);
+                if (!tab) return;
+                const preview = document.createElement("div");
+                preview.className = "tab-preview";
+                preview.id = "tab-preview-active";
+                const thumb = document.createElement("div");
+                thumb.className = "tab-preview-thumb";
+                if (tab.isNewTab || !tab.url) {
+                    thumb.innerHTML = '<div class="tab-preview-home">VORTEX</div>';
+                } else {
+                    const frame = document.createElement("iframe");
+                    frame.src = tab.url;
+                    frame.loading = "lazy";
+                    thumb.appendChild(frame);
+                }
+                const title = document.createElement("div");
+                title.className = "tab-preview-title";
+                title.textContent = tab.title || "New Tab";
+                const url = document.createElement("div");
+                url.className = "tab-preview-url";
+                url.textContent = tab.url || "Home Page";
+                preview.append(thumb, title, url);
+                document.body.appendChild(preview);
+                const bounds = tabElement.getBoundingClientRect();
+                const left = Math.max(8, Math.min(window.innerWidth - 288, bounds.left + (bounds.width / 2) - 140));
+                preview.style.left = `${left}px`;
+                preview.style.top = `${Math.min(window.innerHeight - 190, bounds.bottom + 8)}px`;
+                requestAnimationFrame(() => preview.classList.add("visible"));
+            }
+
+            function hideTabPreview() {
+                document.getElementById("tab-preview-active")?.remove();
+            }
+
             // Quick Links
             function renderQuickLinks(tabId) {
                 const container = document.getElementById(`quick-links-${tabId}`);
                 if (!container) return;
 
-                let html = quickLinks.map((link, index) => `
-                    <div class="quick-link" onclick="navigateInTab('${tabId}', '${link.url}')">
-                        <div class="quick-link-delete" onclick="event.stopPropagation(); removeQuickLink(${index})">×</div>
-                        <div class="quick-link-icon">${link.icon}</div>
-                        <div class="quick-link-title">${link.title}</div>
-                    </div>
-                `).join("");
+                container.replaceChildren();
+                quickLinks.forEach((link, index) => {
+                    const quickLink = document.createElement("div");
+                    quickLink.className = "quick-link";
+                    quickLink.draggable = true;
+                    quickLink.innerHTML = `
+                        <div class="quick-link-delete">×</div>
+                        <div class="quick-link-icon"></div>
+                        <div class="quick-link-title"></div>`;
+                    quickLink.querySelector(".quick-link-icon").textContent = link.icon;
+                    quickLink.querySelector(".quick-link-title").textContent = link.title;
+                    quickLink.addEventListener("click", () => navigateInTab(tabId, link.url));
+                    quickLink.querySelector(".quick-link-delete").addEventListener("click", (event) => {
+                        event.stopPropagation();
+                        removeQuickLink(index);
+                    });
+                    quickLink.addEventListener("dragstart", (event) => {
+                        event.dataTransfer.effectAllowed = "copy";
+                        event.dataTransfer.setData("application/x-vortex-link", JSON.stringify(link));
+                        event.dataTransfer.setData("text/plain", link.url);
+                    });
+                    container.appendChild(quickLink);
+                });
 
-                html += `
-                    <div class="add-quick-link" onclick="openAddLinkModal()">
-                        <div class="add-quick-link-icon">+</div>
-                        <div class="add-quick-link-text">Add Link</div>
-                    </div>
-                `;
-                
-                container.innerHTML = html;
+                const addLink = document.createElement("div");
+                addLink.className = "add-quick-link";
+                addLink.innerHTML = '<div class="add-quick-link-icon">+</div><div class="add-quick-link-text">Add Link</div>';
+                addLink.addEventListener("click", openAddLinkModal);
+                container.appendChild(addLink);
             }
 
             function removeQuickLink(index) {
@@ -1663,6 +2172,133 @@
                         if (!t.isIncognito) renderQuickLinks(t.id);
                     });
                 }
+            }
+
+            function renderBookmarksBar() {
+                const bar = document.getElementById("bookmarks-bar");
+                if (!bar) return;
+                bar.replaceChildren();
+                bookmarks.forEach((bookmark) => {
+                    const chip = document.createElement("div");
+                    chip.className = "bookmark-chip";
+                    chip.title = bookmark.url;
+                    chip.innerHTML = '<span>🔖</span><span></span>';
+                    chip.querySelector("span:last-child").textContent = bookmark.title;
+                    chip.addEventListener("click", () => navigateInTab(activeTabId, bookmark.url));
+                    bar.appendChild(chip);
+                });
+            }
+
+            function setupBookmarkDropZone() {
+                const zone = document.getElementById("bookmark-drop-zone");
+                if (!zone) return;
+                ["dragenter", "dragover"].forEach((eventName) => zone.addEventListener(eventName, (event) => {
+                    event.preventDefault();
+                    zone.classList.add("drag-over");
+                }));
+                ["dragleave", "drop"].forEach((eventName) => zone.addEventListener(eventName, () => zone.classList.remove("drag-over")));
+                zone.addEventListener("drop", (event) => {
+                    event.preventDefault();
+                    let droppedLink;
+                    try {
+                        droppedLink = JSON.parse(event.dataTransfer.getData("application/x-vortex-link"));
+                    } catch (error) {
+                        droppedLink = null;
+                    }
+                    if (!droppedLink?.url) {
+                        const url = event.dataTransfer.getData("text/uri-list") || event.dataTransfer.getData("text/plain");
+                        if (url) droppedLink = { title: url, url, icon: "🔗" };
+                    }
+                    if (!droppedLink?.url) return;
+                    addBookmarkRecord(droppedLink.title || droppedLink.url, droppedLink.url);
+                });
+            }
+
+            function initParticleCanvas(canvas) {
+                if (!canvas || canvas.dataset.ready === "true") return;
+                canvas.dataset.ready = "true";
+                const context = canvas.getContext("2d");
+                const particles = [];
+                const pointer = { x: -1000, y: -1000, active: false };
+                let frameId;
+                const resize = () => {
+                    const bounds = canvas.parentElement.getBoundingClientRect();
+                    const ratio = Math.min(window.devicePixelRatio || 1, 2);
+                    canvas.width = bounds.width * ratio;
+                    canvas.height = bounds.height * ratio;
+                    canvas.style.width = `${bounds.width}px`;
+                    canvas.style.height = `${bounds.height}px`;
+                    context.setTransform(ratio, 0, 0, ratio, 0, 0);
+                    if (!particles.length) {
+                        const count = Math.min(90, Math.max(34, Math.floor(bounds.width / 14)));
+                        for (let index = 0; index < count; index += 1) {
+                            particles.push({
+                                x: Math.random() * bounds.width,
+                                y: Math.random() * bounds.height,
+                                vx: (Math.random() - 0.5) * 0.35,
+                                vy: (Math.random() - 0.5) * 0.35,
+                                size: Math.random() * 2 + 0.7
+                            });
+                        }
+                    }
+                };
+                const movePointer = (event) => {
+                    const bounds = canvas.getBoundingClientRect();
+                    pointer.x = event.clientX - bounds.left;
+                    pointer.y = event.clientY - bounds.top;
+                    pointer.active = true;
+                };
+                canvas.addEventListener("pointermove", movePointer);
+                canvas.addEventListener("pointerleave", () => { pointer.active = false; });
+                window.addEventListener("resize", resize);
+                resize();
+                const draw = () => {
+                    const bounds = canvas.getBoundingClientRect();
+                    context.clearRect(0, 0, bounds.width, bounds.height);
+                    particles.forEach((particle) => {
+                        if (pointer.active) {
+                            const dx = pointer.x - particle.x;
+                            const dy = pointer.y - particle.y;
+                            const distance = Math.hypot(dx, dy);
+                            if (distance < 150 && distance > 0) {
+                                particle.vx -= (dx / distance) * 0.01;
+                                particle.vy -= (dy / distance) * 0.01;
+                            }
+                        }
+                        particle.x += particle.vx;
+                        particle.y += particle.vy;
+                        if (particle.x < 0 || particle.x > bounds.width) particle.vx *= -1;
+                        if (particle.y < 0 || particle.y > bounds.height) particle.vy *= -1;
+                        context.fillStyle = getComputedStyle(document.body).getPropertyValue("--accent-color") || "#ff1b54";
+                        context.globalAlpha = 0.7;
+                        context.beginPath();
+                        context.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
+                        context.fill();
+                    });
+                    context.globalAlpha = 0.18;
+                    for (let first = 0; first < particles.length; first += 1) {
+                        for (let second = first + 1; second < particles.length; second += 1) {
+                            const distance = Math.hypot(particles[first].x - particles[second].x, particles[first].y - particles[second].y);
+                            if (distance < 90) {
+                                context.strokeStyle = getComputedStyle(document.body).getPropertyValue("--accent-color") || "#ff1b54";
+                                context.beginPath();
+                                context.moveTo(particles[first].x, particles[first].y);
+                                context.lineTo(particles[second].x, particles[second].y);
+                                context.stroke();
+                            }
+                        }
+                    }
+                    frameId = requestAnimationFrame(draw);
+                };
+                canvas._stopParticles = () => {
+                    cancelAnimationFrame(frameId);
+                    window.removeEventListener("resize", resize);
+                };
+                draw();
+            }
+
+            function stopParticleCanvas(container) {
+                container?.querySelector(".particle-canvas")?._stopParticles?.();
             }
 
             function openAddLinkModal() {
@@ -1709,20 +2345,19 @@
                 let finalUrl = url;
                 if (!tab.isIncognito && !url.includes("google.com/search") && !url.includes("bing.com/search") && !url.includes("duckduckgo.com")) {
                     if (currentProxy === 'ultraviolet') {
-                         finalUrl = "https://uv.example.com/service/" + btoa(url); // Mock UV encoding
-                         // Since we don't have a real UV backend, we'll fall back to a direct load or custom proxy
                          if (customProxyUrl) {
-                              finalUrl = customProxyUrl + url;
+                              finalUrl = customProxyUrl.replace(/\/$/, "") + "/service/" + btoa(url);
                          } else {
-                              // If no custom proxy and no real UV, just alert user or load direct
-                              console.log("Using Mock Proxy for: " + url);
-                              // For demonstration, let's just append a query param to show it's proxied
-                              // finalUrl = url + "?proxied=true"; 
+                              finalUrl = url;
                          }
+                    } else if (currentProxy === 'tab') {
+                        finalUrl = url;
                     } else if (customProxyUrl) {
                         finalUrl = customProxyUrl + url;
                     }
                 }
+
+                finalUrl = normalizeEmbeddableUrl(finalUrl);
 
                 tab.url = url; // Keep original URL in state for display
                 tab.isNewTab = false;
@@ -1745,10 +2380,7 @@
 
                     updateTabTitle(tabId, domain);
 
-                    // Iframe
-                    // Note: In a real "browse freely" scenario, this needs a backend proxy to avoid X-Frame-Options
-                    // Here we use the finalUrl which might be the proxied URL
-                    contentElement.innerHTML = `<iframe class="content-iframe" src="${finalUrl}" onload="hideLoading()" onerror="hideLoading()"></iframe>`;
+                    renderWebContent(contentElement, finalUrl, url);
                 }
 
                 if (activeTabId === tabId) {
@@ -1757,69 +2389,82 @@
                 }
             }
 
-            function goHome() {
-                const tab = tabs.find(t => t.id === activeTabId);
-                if (!tab) return;
-                
-                tab.isNewTab = true;
-                tab.url = "";
-                tab.title = tab.isIncognito ? "Incognito Tab" : "Home Page";
-                
-                updateTabTitle(activeTabId, tab.title);
-                document.getElementById("url-input").value = "";
-                
-                const contentElement = document.querySelector(`.tab-content[data-tab-id="${activeTabId}"]`);
-                contentElement.innerHTML = `
-                    <div class="new-tab-page">
-                        <div class="vortex-logo" data-text="VORTEX">VORTEX</div>
-                         ${tab.isIncognito ? '<div style="margin-bottom: 20px; color: #a855f7;">Incognito Mode</div>' : ''}
-                        <div class="search-container">
-                            <input type="text" class="search-box" placeholder="${tab.isIncognito ? 'Browse freely...' : 'Search the web...'}" onkeydown="handleNewTabSearch(event, '${activeTabId}')" />
-                            <button class="search-btn" onclick="performNewTabSearch('${activeTabId}')">
-                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.35-4.35"></path></svg>
-                            </button>
-                        </div>
-                        <div class="quick-links" id="quick-links-${activeTabId}"></div>
-                    </div>
-                `;
-                if (!tab.isIncognito) renderQuickLinks(activeTabId);
-                updateNavigationButtons(tab);
+            function normalizeEmbeddableUrl(url) {
+                try {
+                    const parsed = new URL(url);
+                    let videoId = parsed.searchParams.get("v");
+                    if (!videoId && parsed.hostname === "youtu.be") videoId = parsed.pathname.slice(1).split("/")[0];
+                    if (videoId && (parsed.hostname.includes("youtube.com") || parsed.hostname === "youtu.be")) {
+                        return `https://www.youtube-nocookie.com/embed/${encodeURIComponent(videoId)}`;
+                    }
+                } catch (error) {
+                    return url;
+                }
+                return url;
+            }
+
+            function buildSearchUrl(query) {
+                const encoded = encodeURIComponent(query.trim());
+                if (currentSearchEngine === "bing") return `https://www.bing.com/search?q=${encoded}`;
+                if (currentSearchEngine === "duckduckgo") return `https://duckduckgo.com/?q=${encoded}`;
+                return `https://www.bing.com/search?q=${encoded}`;
             }
 
             function handleUrlSubmit() {
                 const input = document.getElementById("url-input");
-                let url = input.value.trim();
-                if (!url) return;
-
-                if (!url.includes(".") || url.includes(" ")) {
-                    if (currentSearchEngine === 'bing') {
-                         url = `https://www.bing.com/search?q=${encodeURIComponent(url)}`;
-                    } else if (currentSearchEngine === 'duckduckgo') {
-                         url = `https://duckduckgo.com/?q=${encodeURIComponent(url)}`;
-                    } else {
-                         url = `https://www.google.com/search?q=${encodeURIComponent(url)}&igu=1`;
-                    }
-                }
+                const value = input?.value.trim();
+                if (!value || !activeTabId) return;
+                const url = /^(https?:|data:)/i.test(value)
+                    ? value
+                    : (value.includes(".") && !value.includes(" ") ? `https://${value}` : buildSearchUrl(value));
                 navigateInTab(activeTabId, url);
             }
-            
+
             function performNewTabSearch(tabId) {
                 const input = document.querySelector(`.tab-content[data-tab-id="${tabId}"] .search-box`);
-                if (input && input.value.trim()) {
-                    let url = "";
-                    if (currentSearchEngine === 'bing') {
-                         url = `https://www.bing.com/search?q=${encodeURIComponent(input.value.trim())}`;
-                    } else if (currentSearchEngine === 'duckduckgo') {
-                         url = `https://duckduckgo.com/?q=${encodeURIComponent(input.value.trim())}`;
-                    } else {
-                         url = `https://www.google.com/search?q=${encodeURIComponent(input.value.trim())}&igu=1`;
-                    }
-                    navigateInTab(tabId, url);
+                if (input?.value.trim()) navigateInTab(tabId, buildSearchUrl(input.value));
+            }
+
+            function handleNewTabSearch(event, tabId) {
+                if (event.key === "Enter") {
+                    event.preventDefault();
+                    performNewTabSearch(tabId);
                 }
             }
-            
-            function handleNewTabSearch(event, tabId) {
-                if (event.key === "Enter") performNewTabSearch(tabId);
+
+            function renderWebContent(contentElement, frameUrl, originalUrl) {
+                contentElement.replaceChildren();
+                const iframe = document.createElement("iframe");
+                iframe.className = "content-iframe";
+                iframe.loading = "eager";
+                iframe.referrerPolicy = "no-referrer-when-downgrade";
+                const fallback = document.createElement("div");
+                fallback.className = "tab-fallback";
+                fallback.hidden = true;
+                fallback.innerHTML = "<div class=\"tab-fallback-card\"><strong>This site did not finish loading here.</strong><p>Some sites block embedded viewing. Open this page in a normal browser tab to keep browsing responsive.</p></div>";
+                const openButton = document.createElement("a");
+                openButton.className = "form-btn";
+                openButton.textContent = "Open in browser tab";
+                openButton.href = originalUrl;
+                openButton.target = "_blank";
+                openButton.rel = "noopener noreferrer";
+                fallback.querySelector(".tab-fallback-card").appendChild(openButton);
+                let settled = false;
+                const showFallback = () => {
+                    if (settled) return;
+                    settled = true;
+                    iframe.hidden = true;
+                    fallback.hidden = false;
+                    hideLoading();
+                };
+                iframe.onload = () => {
+                    settled = true;
+                    hideLoading();
+                };
+                iframe.onerror = showFallback;
+                iframe.src = frameUrl;
+                contentElement.append(iframe, fallback);
+                window.setTimeout(showFallback, 10000);
             }
 
             function goBack() {
@@ -1842,6 +2487,17 @@
                 const contentElement = document.querySelector(`.tab-content[data-tab-id="${activeTabId}"]`);
                 const iframe = contentElement.querySelector("iframe");
                 if (iframe) iframe.src = iframe.src;
+            }
+
+            function showFrameFallback() {
+                const contentElement = document.querySelector(`.tab-content[data-tab-id="${activeTabId}"]`);
+                const iframe = contentElement?.querySelector(".content-iframe");
+                const fallback = contentElement?.querySelector(".tab-fallback");
+                if (iframe && fallback) {
+                    iframe.hidden = true;
+                    fallback.hidden = false;
+                }
+                hideLoading();
             }
 
             function updateTabTitle(tabId, title) {
@@ -1897,6 +2553,7 @@
                 document.querySelectorAll(".proxy-option").forEach(el => el.classList.remove("selected"));
                 if (currentProxy === 'direct') document.getElementById("proxy-direct")?.classList.add("selected");
                 if (currentProxy === 'ultraviolet') document.getElementById("proxy-ultraviolet")?.classList.add("selected");
+                if (currentProxy === 'tab') document.getElementById("proxy-tab")?.classList.add("selected");
             }
 
             // Panels
@@ -1934,15 +2591,23 @@
                     return;
                 }
 
-                list.innerHTML = bookmarks.map((b, i) => `
-                    <div style="background: #26262b; padding: 10px; margin-bottom: 5px; border-radius: 6px; display: flex; justify-content: space-between; align-items: center;">
-                        <div style="cursor: pointer; flex: 1" onclick="navigateInTab('${activeTabId}', '${b.url}')">
-                            <div style="font-weight: 500">${b.title}</div>
-                            <div style="font-size: 11px; color: #888; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 200px;">${b.url}</div>
-                        </div>
-                        <button style="background: none; border: none; color: #ef4444; cursor: pointer;" onclick="deleteBookmark(${i})">×</button>
-                    </div>
-                `).join("");
+                list.replaceChildren();
+                bookmarks.forEach((bookmark, index) => {
+                    const row = document.createElement("div");
+                    row.style.cssText = "background: #26262b; padding: 10px; margin-bottom: 5px; border-radius: 6px; display: flex; justify-content: space-between; align-items: center;";
+                    const link = document.createElement("div");
+                    link.style.cssText = "cursor: pointer; flex: 1";
+                    link.innerHTML = '<div style="font-weight: 500"></div><div style="font-size: 11px; color: #888; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 200px;"></div>';
+                    link.firstElementChild.textContent = bookmark.title;
+                    link.lastElementChild.textContent = bookmark.url;
+                    link.addEventListener("click", () => navigateInTab(activeTabId, bookmark.url));
+                    const remove = document.createElement("button");
+                    remove.textContent = "×";
+                    remove.style.cssText = "background: none; border: none; color: #ef4444; cursor: pointer;";
+                    remove.addEventListener("click", () => deleteBookmark(index));
+                    row.append(link, remove);
+                    list.appendChild(row);
+                });
             }
 
             function addBookmark() {
@@ -1950,14 +2615,21 @@
                 const url = document.getElementById("bookmark-url").value;
                 
                 if (!url) return;
-                
-                bookmarks.push({ title, url });
-                localStorage.setItem("vortex-bookmarks", JSON.stringify(bookmarks));
-                loadBookmarks();
-                
+
+                addBookmarkRecord(title, url);
                 document.getElementById("bookmark-title").value = "";
                 document.getElementById("bookmark-url").value = "";
-                
+            }
+
+            function addBookmarkRecord(title, rawUrl) {
+                let url = rawUrl.trim();
+                if (!url) return;
+                if (!/^https?:\/\//i.test(url) && !url.startsWith("data:")) url = `https://${url}`;
+                if (bookmarks.some((bookmark) => bookmark.url === url)) return;
+                bookmarks.push({ title: title || url, url });
+                localStorage.setItem("vortex-bookmarks", JSON.stringify(bookmarks));
+                loadBookmarks();
+                renderBookmarksBar();
                 const tab = tabs.find(t => t.id === activeTabId);
                 if (tab && tab.url === url) {
                     document.getElementById("bookmark-current-btn").classList.add("bookmarked");
@@ -1978,17 +2650,21 @@
                 }
                 localStorage.setItem("vortex-bookmarks", JSON.stringify(bookmarks));
                 if (activePanelId === "bookmarks") loadBookmarks();
+                renderBookmarksBar();
             }
 
             function deleteBookmark(index) {
                 bookmarks.splice(index, 1);
                 localStorage.setItem("vortex-bookmarks", JSON.stringify(bookmarks));
                 loadBookmarks();
+                renderBookmarksBar();
             }
             
             // Sidebar toggle
             function toggleSidebar() {
-                document.getElementById("sidebar").classList.toggle("expanded");
+                const sidebar = document.getElementById("sidebar");
+                sidebar.classList.toggle("expanded");
+                if (sidebar.classList.contains("expanded")) closePanel();
             }
             
             // Utilities
@@ -2005,16 +2681,52 @@
             }
             
             function simulatePerformance() {
-                setInterval(() => {
-                    const cpu = Math.floor(Math.random() * 30) + 5;
-                    const ram = Math.floor(Math.random() * 40) + 20;
-                    
-                    document.getElementById("cpu-percent").textContent = cpu + "%";
-                    document.getElementById("cpu-fill").style.width = cpu + "%";
-                    
-                    document.getElementById("ram-percent").textContent = ram + "%";
-                    document.getElementById("ram-fill").style.width = ram + "%";
-                }, 2000);
+                setInterval(updatePerformanceMetrics, 1000);
+                updatePerformanceMetrics();
+            }
+
+            function updatePerformanceMetrics() {
+                window.postMessage({ type: "vortex-system-metrics" }, "*");
+                const memory = performance.memory;
+                const ram = memory ? Math.min(100, Math.round((memory.usedJSHeapSize / memory.jsHeapSizeLimit) * 100)) : Math.min(92, 25 + Math.round((tabs.length * 7) + (document.querySelectorAll("iframe").length * 4)));
+                const cpu = Math.min(100, Math.max(1, Math.round((document.hidden ? 4 : 8) + (tabs.length * 3) + (document.querySelectorAll("canvas").length * 2))));
+                updateMetric("cpu", cpu);
+                updateMetric("ram", ram);
+                const source = document.getElementById("metric-source");
+                if (source) source.textContent = memory ? "Live JavaScript heap estimate" : "Live browser estimate; install the companion extension for system-wide metrics";
+            }
+
+            function updateMetric(type, value) {
+                const percent = document.getElementById(`${type}-percent`);
+                const fill = document.getElementById(`${type}-fill`);
+                const history = type === "cpu" ? cpuHistory : ramHistory;
+                if (percent) percent.textContent = `${value}%`;
+                if (fill) fill.style.width = `${value}%`;
+                history.push(value);
+                if (history.length > 36) history.shift();
+                drawMetricChart(`${type}-chart`, history);
+            }
+
+            function drawMetricChart(id, values) {
+                const canvas = document.getElementById(id);
+                if (!canvas) return;
+                const context = canvas.getContext("2d");
+                const width = canvas.clientWidth || 280;
+                const height = canvas.clientHeight || 84;
+                const ratio = window.devicePixelRatio || 1;
+                canvas.width = width * ratio;
+                canvas.height = height * ratio;
+                context.setTransform(ratio, 0, 0, ratio, 0, 0);
+                context.clearRect(0, 0, width, height);
+                context.strokeStyle = getComputedStyle(document.body).getPropertyValue("--accent-color") || "#ff1b54";
+                context.lineWidth = 2;
+                context.beginPath();
+                values.forEach((value, index) => {
+                    const x = values.length === 1 ? 0 : (index / (values.length - 1)) * width;
+                    const y = height - (value / 100) * (height - 8) - 4;
+                    if (index === 0) context.moveTo(x, y); else context.lineTo(x, y);
+                });
+                context.stroke();
             }
             
             function clearData() {
@@ -2028,6 +2740,88 @@
                     location.reload();
                 }
             }
+
+            function toggleBookmarksBar() {
+                const enabled = document.getElementById("setting-bookmarks-bar")?.checked ?? true;
+                localStorage.setItem("vortex-bookmarks-bar", enabled);
+                document.getElementById("bookmarks-bar").style.display = enabled ? "flex" : "none";
+            }
+
+            function applyModSettings() {
+                const musicToggle = document.getElementById("music-enabled");
+                const keyboardToggle = document.getElementById("keyboard-enabled");
+                const keyboardSelect = document.getElementById("keyboard-sound");
+                const musicSelect = document.getElementById("music-station");
+                const retroToggle = document.getElementById("retro-enabled");
+                if (musicToggle) musicToggle.checked = musicEnabled;
+                if (keyboardToggle) keyboardToggle.checked = keyboardSoundsEnabled;
+                if (keyboardSelect) keyboardSelect.value = keyboardSoundType;
+                if (musicSelect) musicSelect.value = musicStation;
+                if (retroToggle) retroToggle.checked = retroEnabled;
+                document.body.classList.toggle("retro-mode", retroEnabled);
+                const bookmarksBar = document.getElementById("bookmarks-bar");
+                if (bookmarksBar) bookmarksBar.style.display = localStorage.getItem("vortex-bookmarks-bar") === "false" ? "none" : "flex";
+                if (musicEnabled) startMusic();
+            }
+
+            function toggleMusic(enabled) {
+                musicEnabled = enabled;
+                localStorage.setItem("vortex-music-enabled", enabled);
+                if (enabled) startMusic(); else document.getElementById("music-player")?.pause();
+            }
+
+            function startMusic() {
+                const player = document.getElementById("music-player");
+                if (!player) return;
+                player.src = musicStation;
+                player.volume = 0.18;
+                player.play().catch(() => {});
+            }
+
+            function changeMusicStation(station) {
+                musicStation = station;
+                localStorage.setItem("vortex-music-station", station);
+                if (musicEnabled) startMusic();
+            }
+
+            function toggleKeyboardSounds(enabled) {
+                keyboardSoundsEnabled = enabled;
+                localStorage.setItem("vortex-keyboard-enabled", enabled);
+            }
+
+            function changeKeyboardSound(type) {
+                keyboardSoundType = type;
+                localStorage.setItem("vortex-keyboard-sound", type);
+            }
+
+            function playKeyboardSound() {
+                if (!keyboardSoundsEnabled) return;
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                const oscillator = audioContext.createOscillator();
+                const gain = audioContext.createGain();
+                const settings = {
+                    click: [180, 0.035],
+                    typewriter: [420, 0.06],
+                    synth: [260, 0.08]
+                }[keyboardSoundType] || [180, 0.035];
+                oscillator.frequency.value = settings[0];
+                oscillator.type = keyboardSoundType === "synth" ? "sine" : "square";
+                gain.gain.setValueAtTime(0.025, audioContext.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + settings[1]);
+                oscillator.connect(gain).connect(audioContext.destination);
+                oscillator.start();
+                oscillator.stop(audioContext.currentTime + settings[1]);
+            }
+
+            function toggleRetroMode(enabled) {
+                retroEnabled = enabled;
+                localStorage.setItem("vortex-retro-enabled", enabled);
+                document.body.classList.toggle("retro-mode", enabled);
+            }
+
+            document.addEventListener("keydown", (event) => {
+                if (event.key.length === 1 || event.key === "Backspace") playKeyboardSound();
+            });
             
             // Theme Handling
             function toggleTheme() {
@@ -2047,6 +2841,39 @@
                 } else {
                     document.body.classList.add('light-theme');
                 }
+            }
+
+            function applyAppearanceSettings() {
+                const accents = ["pink", "cyan", "green", "orange", "violet", "gold", "ice", "white"];
+                if (!accents.includes(selectedAccent)) selectedAccent = "pink";
+                document.body.classList.remove(...accents.map((accent) => `accent-${accent}`));
+                document.body.classList.add(`accent-${selectedAccent}`);
+                document.body.classList.toggle("reduce-motion", !animationsEnabled);
+                const animations = document.getElementById("setting-animations");
+                const adBlock = document.getElementById("setting-ad-block");
+                if (animations) animations.checked = animationsEnabled;
+                if (adBlock) adBlock.checked = adBlockingEnabled;
+                document.querySelectorAll(".accent-swatch").forEach((swatch) => {
+                    swatch.classList.toggle("active", swatch.classList.contains(selectedAccent));
+                });
+            }
+
+            function changeAccent(accent) {
+                selectedAccent = ["pink", "cyan", "green", "orange", "violet", "gold", "ice", "white"].includes(accent) ? accent : "pink";
+                localStorage.setItem("vortex-accent", selectedAccent);
+                applyAppearanceSettings();
+            }
+
+            function toggleAnimations(enabled) {
+                animationsEnabled = enabled;
+                localStorage.setItem("vortex-animations", enabled);
+                applyAppearanceSettings();
+            }
+
+            function toggleAdBlocking(enabled) {
+                adBlockingEnabled = enabled;
+                localStorage.setItem("vortex-ad-blocking", enabled);
+                window.postMessage({ type: "vortex-ad-blocking", enabled }, "*");
             }
             
             // Gaming News Integration (Fixed)
@@ -2107,43 +2934,81 @@
 
             function setupTabReordering() {
                 const tabsContainer = document.getElementById('tab-bar');
-                
-                tabsContainer.addEventListener('dragstart', (e) => {
-                    if (!e.target.classList.contains('tab')) {
-                        e.preventDefault(); // Only drag tabs
-                        return;
-                    }
-                    e.target.classList.add('dragging');
-                    // Store the ID to help with reordering logic if needed
-                    e.dataTransfer.setData('text/plain', e.target.dataset.tabId);
+                let dragging = null;
+                let pointerId = null;
+                let startX = 0;
+                let grabOffset = 0;
+                let moved = false;
+
+                tabsContainer.addEventListener('pointerdown', (event) => {
+                    const tab = event.target.closest('.tab');
+                    if (!tab || event.target.closest('.tab-close')) return;
+                    dragging = tab;
+                    pointerId = event.pointerId;
+                    startX = event.clientX;
+                    grabOffset = event.clientX - tab.getBoundingClientRect().left;
+                    moved = false;
+                    tab.setPointerCapture?.(pointerId);
                 });
 
-                tabsContainer.addEventListener('dragend', (e) => {
-                    e.target.classList.remove('dragging');
+                tabsContainer.addEventListener('pointermove', (event) => {
+                    if (!dragging || event.pointerId !== pointerId) return;
+                    if (Math.abs(event.clientX - startX) < 8) return;
+                    moved = true;
+                    const bounds = tabsContainer.getBoundingClientRect();
+                    if (event.clientY < bounds.top || event.clientY > bounds.bottom) return;
+                    dragging.classList.add('dragging');
+                    updateDraggedTabPosition(dragging, event.clientX, bounds.left, grabOffset);
+                    const afterElement = getDragAfterElement(tabsContainer, event.clientX);
+                    const newTabBtn = document.querySelector('.new-tab-btn');
+                    reorderTabsSmoothly(tabsContainer, dragging, afterElement || newTabBtn);
+                    updateDraggedTabPosition(dragging, event.clientX, bounds.left, grabOffset);
+                });
+
+                const finishPointerDrag = (event) => {
+                    if (!dragging || (event.pointerId !== undefined && event.pointerId !== pointerId)) return;
+                    const tab = dragging;
+                    tab.style.transform = "";
+                    tab.classList.remove('dragging');
+                    if (moved) tab.dataset.suppressClick = "true";
+                    clearTabDropPreview(tabsContainer);
                     synchronizeTabsArray();
+                    dragging = null;
+                    pointerId = null;
+                };
+
+                tabsContainer.addEventListener('pointerup', finishPointerDrag);
+                tabsContainer.addEventListener('pointercancel', finishPointerDrag);
+            }
+
+            function updateDraggedTabPosition(tab, pointerX, containerLeft, grabOffset) {
+                const desiredOffset = pointerX - containerLeft - tab.offsetLeft - grabOffset;
+                tab.style.transform = `translateX(${desiredOffset}px) scale(1.02) rotate(-1deg)`;
+            }
+
+            function reorderTabsSmoothly(container, dragging, insertionPoint) {
+                const positions = new Map(
+                    [...container.querySelectorAll('.tab')].map((tab) => [tab, tab.getBoundingClientRect().left])
+                );
+                container.insertBefore(dragging, insertionPoint);
+                positions.forEach((previousLeft, tab) => {
+                    if (tab === dragging || !tab.isConnected) return;
+                    const currentLeft = tab.getBoundingClientRect().left;
+                    const delta = previousLeft - currentLeft;
+                    if (!delta) return;
+                    tab.animate(
+                        [
+                            { transform: `translateX(${delta}px)` },
+                            { transform: "translateX(0)" }
+                        ],
+                        { duration: 180, easing: "cubic-bezier(0.22, 1, 0.36, 1)" }
+                    );
                 });
+            }
 
-                tabsContainer.addEventListener('dragover', (e) => {
-                    e.preventDefault();
-                    
-                    // Only allow dropping if we are dragging a tab
-                    const dragging = document.querySelector('.tab.dragging');
-                    if (!dragging) return;
-
-                    const afterElement = getDragAfterElement(tabsContainer, e.clientX);
-                    
-                    // We need to be careful not to drop after the 'new-tab-btn' or other buttons
-                    // The easiest way is to use insertBefore
-                    
-                    if (afterElement == null) {
-                        // If no after element (end of tabs), insert before new-tab-btn
-                        const newTabBtn = document.querySelector('.new-tab-btn');
-                        tabsContainer.insertBefore(dragging, newTabBtn);
-                    } else {
-                         // Check if afterElement is a tab. If it's a button, we might want to be careful.
-                         // Our getDragAfterElement filters for .tab:not(.dragging) so it should be fine.
-                        tabsContainer.insertBefore(dragging, afterElement);
-                    }
+            function clearTabDropPreview(container) {
+                container.querySelectorAll('.drop-before, .drop-after').forEach((tab) => {
+                    tab.classList.remove('drop-before', 'drop-after');
                 });
             }
 
